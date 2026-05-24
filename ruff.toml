@@ -1,0 +1,16 @@
+target-version = "py312"
+line-length = 100
+src = ["src", "tests"]
+
+[lint]
+select = ["E", "F", "I", "B", "UP", "SIM", "C4", "RET", "PT"]
+
+[lint.per-file-ignores]
+"tests/**" = ["B"]
+
+[format]
+quote-style = "double"
+indent-style = "space"
+# line-ending defaults to "auto": preserve existing endings on Windows checkouts
+# (git's autocrlf would otherwise fight a hard-coded "lf" setting).
+line-ending = "auto"

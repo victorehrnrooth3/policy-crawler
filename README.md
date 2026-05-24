@@ -44,3 +44,21 @@ When I ask you to execute Step N:
 ## Stack at a glance
 
 Python 3.12 · Neon Postgres · Anthropic Claude (Haiku 4.5 → Sonnet 4.6) · Resend · FastAPI · Vercel hobby · GitHub Actions cron. All free tier or near-free for a single user. Full rationale in [`docs/03-tech-stack.md`](docs/03-tech-stack.md).
+
+## Install & test
+
+Requires Python 3.12. From a clean clone:
+
+```bash
+python -m venv .venv
+. .venv/Scripts/activate            # PowerShell: .venv\Scripts\Activate.ps1
+                                    # bash/zsh:   source .venv/bin/activate
+pip install -e .[dev]
+
+ruff check .
+ruff format --check .
+pyright
+pytest -q
+```
+
+All five commands should exit 0 on a fresh checkout. See [`docs/steps/01-scaffolding.md`](docs/steps/01-scaffolding.md) for the canonical acceptance criteria.
