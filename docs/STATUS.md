@@ -6,31 +6,37 @@ Single source of truth for "where are we right now?". Update this file at the en
 
 | Step | State | Branch | Notes |
 |---|---|---|---|
-| 01 — Scaffolding | **Done, committed, pushed** | `step-01-scaffolding` (`1587dac`) | All 5 acceptance commands exit 0. |
-| 02 — Database | **Done, committed, pushed** | `step-02-database` | Migration applied to Neon. All 5 acceptance commands exit 0. |
-| 03 — Source registry | **Done, committed, pushed** | `step-02-database` (same branch) | 117 sources seeded. All acceptance commands pass. |
-| 04–11 | Not started | — | — |
+| 01 — Scaffolding | **Done, merged to main** | `step-01-scaffolding` (`1587dac`) | All acceptance commands exit 0. |
+| 02 — Database | **Done, merged to main** | — | Migration applied. Live DB tests pass. |
+| 03 — Source registry | **Done, merged to main** | — | 117 sources seeded. |
+| 04 — Crawler framework | **Done, in progress** | `step-04-crawler` (this branch) | Framework complete. Sources need `fetcher_config` populated before crawl yields jobs. See below. |
+| 05–11 | Not started | — | — |
 
 ## What's on disk right now (this branch)
 
-Everything from Steps 01 and 02, plus Step 03 deliverables:
+Everything from Steps 01–03 merged to main, plus Step 04:
 
-- `migrations/0002_sources_unique.sql` — UNIQUE constraint on `sources(name, careers_url)`.
-- `data/sources.yaml` — 117 sources across 8 categories. All careers URLs verified via httpx; 403s kept enabled (bot-blocked but live); 404s set enabled: false with notes.
-- `src/policy_crawler/seed.py` — `load_yaml()`, `upsert_sources()`, CLI (`--apply` / `--validate-only`).
-- `tests/test_seed.py` — YAML parse test + live upsert idempotency test.
-- `pyproject.toml` — `requires-python` relaxed to `<3.14` (personal laptop has Python 3.13).
+- `src/policy_crawler/crawler/` — base, registry, 11 fetchers, normalize, dedupe, run.py.
+- `tests/crawler/` — VCR tests for Greenhouse (anthropic board), Lever (palantir), Ashby (ashby); normalize/dedupe unit tests; DB integration tests for upsert/idempotency/versioning.
+- `tests/cassettes/` — recorded VCR cassettes.
+- `pyproject.toml` — added `feedparser~=6.0` and `markdownify~=0.13`.
 
-## Disabled sources (enabled: false)
+## Active note: source configuration needed
 
-17 sources have `enabled: false` because their careers_url returned 404 at seed time. Each has a note pointing to the organization's homepage. To enable, visit the homepage, find the current careers URL, update `data/sources.yaml`, and re-run the seed.
+The crawl runs successfully (status=succeeded, 0 errors) but yields 0 jobs because:
+- All `generic_html` sources have `fetcher_config: {}` (no selectors set yet). Use `python -m policy_crawler.crawler.run --configure-generic-html` to see which sources need selectors.
+- `greenhouse`/`lever`/`ashby` sources in the DB have `fetcher_kind: generic_html` + empty config. To get jobs, update `fetcher_config` in `data/sources.yaml` with the correct board/company/org slug, then re-seed.
+- `workday_json` sources need the careers URL to redirect to a `myworkdayjobs.com` URL, or explicit `fetcher_config.endpoint`.
 
-Notable disabled sources: Bruegel, CFR, IFRI, Kiel Institute, Wilson Center, SIPRI, RUSI, NATO, MERICS, Stanford E-IPER, TBI Fellowship.
+**Confirmed working board slugs** (for Step 03 YAML updates):
+- Greenhouse: `anthropic` (371 jobs), `stripe` (474 jobs)
+- Lever: `palantir` (works)
+- Ashby: `ashby` (57 jobs)
 
 ## Next concrete actions (in order)
 
-1. Decide: open PRs for steps 02 and 03, or proceed to Step 04.
-2. Step 04 — Crawler framework: abstract fetcher base, RawJob type, ATS detection (greenhouse/lever/workday etc.), normalize pipeline.
+1. Populate `fetcher_config` for a handful of known Greenhouse/Lever/Ashby sources in `data/sources.yaml` and re-seed, so the crawl yields real jobs.
+2. Proceed to Step 05 (preference profile & ranker).
 
 ## Conventions reminder
 

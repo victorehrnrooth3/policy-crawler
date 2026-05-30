@@ -27,6 +27,8 @@ dependencies = [
     "uvicorn~=0.30",
     "resend~=2.0",
     "tenacity~=9.0",
+    "feedparser~=6.0",
+    "markdownify~=0.13",
 ]
 
 [project.optional-dependencies]
