@@ -7,7 +7,7 @@ name = "policy-crawler"
 version = "0.1.0"
 description = "Daily crawler + LLM ranker that surfaces top policy / research postings via email digest."
 readme = "README.md"
-requires-python = ">=3.12,<3.13"
+requires-python = ">=3.12,<3.14"
 license = { text = "Proprietary" }
 authors = [{ name = "Victor Ehrnrooth" }]
 dependencies = [

@@ -62,3 +62,19 @@ pytest -q
 ```
 
 All five commands should exit 0 on a fresh checkout. See [`docs/steps/01-scaffolding.md`](docs/steps/01-scaffolding.md) for the canonical acceptance criteria.
+
+## Database setup
+
+1. Create a free-tier Neon project named `policy-crawler` at neon.tech.
+2. Copy the **pooled** connection string (host contains `-pooler.`) into `.env` as `NEON_DATABASE_URL`, and the **direct** one as `NEON_DATABASE_URL_DIRECT`.
+3. Apply the schema:
+
+   ```
+   python migrations/_apply.py
+   ```
+
+   Expect: "Applied 0001_init.sql" then "All migrations up to date."
+
+4. Verify in Neon's SQL editor that all 8 tables and 12 enums exist.
+
+Re-running `python migrations/_apply.py` is a no-op.
