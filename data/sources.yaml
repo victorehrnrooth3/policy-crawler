@@ -1,0 +1,1322 @@
+# Policy-crawler source registry — v1 seed
+# Schema version 1. See docs/steps/03-source-registry.md for field definitions.
+# enabled: true = careers_url returned 2xx or 403 (live, bot-blocked; real crawler uses GET).
+# enabled: false = URL returned 404 or DNS error; needs manual verification.
+# fetcher_kind is best-guess; Step 04 ATS detection will refine.
+# geography_tags use: london, nyc, bay_area, boston, dc, paris, brussels, geneva, global, remote.
+
+version: 1
+sources:
+
+  # ── Think tanks ────────────────────────────────────────────────────────────
+
+  - name: "Brookings Institution"
+    homepage_url: "https://www.brookings.edu"
+    careers_url: "https://www.brookings.edu/careers/"
+    category: think_tank
+    fetcher_kind: generic_html
+    fetcher_config: {}
+    geography_tags: [dc, global]
+    priority: 5
+    enabled: true
+    notes: "Domestic & economic policy, foreign policy, energy."
+
+  - name: "Carnegie Endowment for International Peace"
+    homepage_url: "https://carnegieendowment.org"
+    careers_url: "https://carnegieendowment.org/about/employment"
+    category: think_tank
+    fetcher_kind: generic_html
+    fetcher_config: {}
+    geography_tags: [dc, brussels, global]
+    priority: 5
+    enabled: true
+    notes: "Foreign policy & peace. DC HQ plus Brussels office."
+
+  - name: "Bruegel"
+    homepage_url: "https://www.bruegel.org"
+    careers_url: "https://www.bruegel.org/about/jobs"
+    category: think_tank
+    fetcher_kind: generic_html
+    fetcher_config: {}
+    geography_tags: [brussels, global]
+    priority: 5
+    enabled: false
+    notes: "URL returned 404 at seed time; visit bruegel.org to find current jobs page."
+
+  - name: "Center for Strategic and International Studies (CSIS)"
+    homepage_url: "https://www.csis.org"
+    careers_url: "https://www.csis.org/csis-careers"
+    category: think_tank
+    fetcher_kind: generic_html
+    fetcher_config: {}
+    geography_tags: [dc, global]
+    priority: 5
+    enabled: true
+    notes: "Defense, security, tech policy, energy security."
+
+  - name: "Chatham House"
+    homepage_url: "https://www.chathamhouse.org"
+    careers_url: "https://www.chathamhouse.org/about-us/jobs"
+    category: think_tank
+    fetcher_kind: generic_html
+    fetcher_config: {}
+    geography_tags: [london, global]
+    priority: 5
+    enabled: true
+    notes: "International affairs. Leading UK foreign-policy institute."
+
+  - name: "Council on Foreign Relations (CFR)"
+    homepage_url: "https://www.cfr.org"
+    careers_url: "https://www.cfr.org/jobs"
+    category: think_tank
+    fetcher_kind: generic_html
+    fetcher_config: {}
+    geography_tags: [nyc, dc, global]
+    priority: 5
+    enabled: false
+    notes: "URL returned 404 at seed time; visit cfr.org to find current jobs page."
+
+  - name: "Centre for International Governance Innovation (CIGI)"
+    homepage_url: "https://www.cigionline.org"
+    careers_url: "https://www.cigionline.org/about/jobs-and-internships/"
+    category: think_tank
+    fetcher_kind: generic_html
+    fetcher_config: {}
+    geography_tags: [global]
+    priority: 4
+    enabled: true
+    notes: "Global economy & technology governance. Waterloo, Canada."
+
+  - name: "Atlantic Council"
+    homepage_url: "https://www.atlanticcouncil.org"
+    careers_url: "https://www.atlanticcouncil.org/jobs/"
+    category: think_tank
+    fetcher_kind: generic_html
+    fetcher_config: {}
+    geography_tags: [dc, global]
+    priority: 5
+    enabled: true
+    notes: "Transatlantic relations, energy, defense, tech policy."
+
+  - name: "Belfer Center for Science and International Affairs"
+    homepage_url: "https://www.belfercenter.org"
+    careers_url: "https://www.belfercenter.org/careers"
+    category: think_tank
+    fetcher_kind: generic_html
+    fetcher_config: {}
+    geography_tags: [boston, global]
+    priority: 5
+    enabled: true
+    notes: "Science, technology & global security. Harvard Kennedy School."
+
+  - name: "French Institute of International Relations (IFRI)"
+    homepage_url: "https://www.ifri.org"
+    careers_url: "https://www.ifri.org/en/emplois-et-stages"
+    category: think_tank
+    fetcher_kind: generic_html
+    fetcher_config: {}
+    geography_tags: [paris, global]
+    priority: 5
+    enabled: false
+    notes: "URL returned 404 at seed time; visit ifri.org/en to find current jobs page."
+
+  - name: "Peterson Institute for International Economics (PIIE)"
+    homepage_url: "https://www.piie.com"
+    careers_url: "https://www.piie.com/about/employment"
+    category: think_tank
+    fetcher_kind: generic_html
+    fetcher_config: {}
+    geography_tags: [dc, global]
+    priority: 5
+    enabled: true
+    notes: "Trade, global macroeconomics, international finance."
+
+  - name: "Center for American Progress (CAP)"
+    homepage_url: "https://www.americanprogress.org"
+    careers_url: "https://www.americanprogress.org/jobs/"
+    category: think_tank
+    fetcher_kind: generic_html
+    fetcher_config: {}
+    geography_tags: [dc]
+    priority: 4
+    enabled: true
+    notes: "Progressive policy. Energy and climate programs relevant."
+
+  - name: "RAND Corporation"
+    homepage_url: "https://www.rand.org"
+    careers_url: "https://www.rand.org/jobs.html"
+    category: think_tank
+    fetcher_kind: generic_html
+    fetcher_config: {}
+    geography_tags: [dc, global]
+    priority: 5
+    enabled: true
+    notes: "Multi-sector research. Defense, energy, tech all relevant."
+
+  - name: "Kiel Institute for the World Economy (IfW)"
+    homepage_url: "https://www.ifw-kiel.de"
+    careers_url: "https://www.ifw-kiel.de/about-the-kiel-institute/job-vacancies/"
+    category: think_tank
+    fetcher_kind: generic_html
+    fetcher_config: {}
+    geography_tags: [global]
+    priority: 4
+    enabled: false
+    notes: "URL returned 404 at seed time; visit ifw-kiel.de to find current vacancies page."
+
+  - name: "International Institute for Strategic Studies (IISS)"
+    homepage_url: "https://www.iiss.org"
+    careers_url: "https://www.iiss.org/careers"
+    category: think_tank
+    fetcher_kind: generic_html
+    fetcher_config: {}
+    geography_tags: [london, global]
+    priority: 5
+    enabled: true
+    notes: "Military, conflict, strategic studies. London. Finnish military background fits well."
+
+  - name: "Woodrow Wilson International Center for Scholars"
+    homepage_url: "https://www.wilsoncenter.org"
+    careers_url: "https://www.wilsoncenter.org/careers"
+    category: think_tank
+    fetcher_kind: generic_html
+    fetcher_config: {}
+    geography_tags: [dc]
+    priority: 4
+    enabled: false
+    notes: "URL returned 404 at seed time; visit wilsoncenter.org to find current jobs page."
+
+  - name: "Centre for European Policy Studies (CEPS)"
+    homepage_url: "https://www.ceps.eu"
+    careers_url: "https://www.ceps.eu/vacancies/"
+    category: think_tank
+    fetcher_kind: generic_html
+    fetcher_config: {}
+    geography_tags: [brussels]
+    priority: 4
+    enabled: true
+    notes: "EU affairs & governance. Brussels-based."
+
+  - name: "Clingendael — Netherlands Institute of International Relations"
+    homepage_url: "https://www.clingendael.org"
+    careers_url: "https://www.clingendael.org/about/vacancies"
+    category: think_tank
+    fetcher_kind: generic_html
+    fetcher_config: {}
+    geography_tags: [global]
+    priority: 5
+    enabled: true
+    notes: "Diplomacy & security. The Hague, Netherlands."
+
+  - name: "Stiftung Wissenschaft und Politik (SWP)"
+    homepage_url: "https://www.swp-berlin.org"
+    careers_url: "https://www.swp-berlin.org/en/career"
+    category: think_tank
+    fetcher_kind: generic_html
+    fetcher_config: {}
+    geography_tags: [global]
+    priority: 5
+    enabled: true
+    notes: "German foreign & security policy think tank. Berlin."
+
+  - name: "Centre for Economic Policy Research (CEPR)"
+    homepage_url: "https://cepr.org"
+    careers_url: "https://cepr.org/about-cepr/cepr-jobs"
+    category: think_tank
+    fetcher_kind: generic_html
+    fetcher_config: {}
+    geography_tags: [london, global]
+    priority: 5
+    enabled: true
+    notes: "European economic research. London HQ, Europe-wide network."
+
+  - name: "Center for Social and Economic Research (CASE)"
+    homepage_url: "https://www.case-research.eu"
+    careers_url: "https://www.case-research.eu/en/about/jobs"
+    category: think_tank
+    fetcher_kind: generic_html
+    fetcher_config: {}
+    geography_tags: [global]
+    priority: 4
+    enabled: false
+    notes: "URL returned 404 at seed time; visit case-research.eu to find current jobs page."
+
+  - name: "Human Rights Watch"
+    homepage_url: "https://www.hrw.org"
+    careers_url: "https://www.hrw.org/careers"
+    category: think_tank
+    fetcher_kind: generic_html
+    fetcher_config: {}
+    geography_tags: [nyc, global]
+    priority: 3
+    enabled: true
+    notes: "International human rights."
+
+  - name: "Stockholm International Peace Research Institute (SIPRI)"
+    homepage_url: "https://www.sipri.org"
+    careers_url: "https://www.sipri.org/about/employment"
+    category: think_tank
+    fetcher_kind: generic_html
+    fetcher_config: {}
+    geography_tags: [global]
+    priority: 5
+    enabled: false
+    notes: "URL returned 404 at seed time; visit sipri.org to find current employment page."
+
+  - name: "Danish Institute for International Studies (DIIS)"
+    homepage_url: "https://www.diis.dk"
+    careers_url: "https://www.diis.dk/en/jobs"
+    category: think_tank
+    fetcher_kind: generic_html
+    fetcher_config: {}
+    geography_tags: [global]
+    priority: 4
+    enabled: true
+    notes: "Global studies & development. Copenhagen, Denmark."
+
+  - name: "Barcelona Centre for International Affairs (CIDOB)"
+    homepage_url: "https://www.cidob.org"
+    careers_url: "https://www.cidob.org/en/jobs"
+    category: think_tank
+    fetcher_kind: generic_html
+    fetcher_config: {}
+    geography_tags: [global]
+    priority: 4
+    enabled: false
+    notes: "URL returned 404 at seed time; visit cidob.org to find current jobs page."
+
+  - name: "Institute for International Political Studies (ISPI)"
+    homepage_url: "https://www.ispionline.it"
+    careers_url: "https://www.ispionline.it/en/jobs"
+    category: think_tank
+    fetcher_kind: generic_html
+    fetcher_config: {}
+    geography_tags: [global]
+    priority: 4
+    enabled: true
+    notes: "Geopolitics & global trends. Milan, Italy."
+
+  - name: "German Development Institute (IDOS)"
+    homepage_url: "https://www.idos-research.de"
+    careers_url: "https://www.idos-research.de/en/idos/job-vacancies/"
+    category: think_tank
+    fetcher_kind: generic_html
+    fetcher_config: {}
+    geography_tags: [global]
+    priority: 4
+    enabled: false
+    notes: "URL returned 404 at seed time; visit idos-research.de to find current vacancies."
+
+  - name: "LSE IDEAS"
+    homepage_url: "https://www.lse.ac.uk/ideas"
+    careers_url: "https://jobs.lse.ac.uk/"
+    category: think_tank
+    fetcher_kind: generic_html
+    fetcher_config: {}
+    geography_tags: [london, global]
+    priority: 5
+    enabled: true
+    notes: "Diplomacy & strategy. LSE's foreign policy think tank. London."
+
+  - name: "Norwegian Institute of International Affairs (NUPI)"
+    homepage_url: "https://www.nupi.no"
+    careers_url: "https://www.nupi.no/om-nupi/ledige-stillinger"
+    category: think_tank
+    fetcher_kind: generic_html
+    fetcher_config: {}
+    geography_tags: [global]
+    priority: 5
+    enabled: true
+    notes: "Global power relations. Oslo, Norway. Nordic security angle."
+
+  - name: "Overseas Development Institute (ODI)"
+    homepage_url: "https://odi.org"
+    careers_url: "https://odi.org/en/about/jobs/"
+    category: think_tank
+    fetcher_kind: generic_html
+    fetcher_config: {}
+    geography_tags: [london, global]
+    priority: 4
+    enabled: true
+    notes: "International development. London-based."
+
+  - name: "Japan Institute of International Affairs (JIIA)"
+    homepage_url: "https://www.jiia.or.jp"
+    careers_url: "https://www.jiia.or.jp/en/about/employment.html"
+    category: think_tank
+    fetcher_kind: generic_html
+    fetcher_config: {}
+    geography_tags: [global]
+    priority: 3
+    enabled: false
+    notes: "URL returned 404 at seed time; visit jiia.or.jp to find current employment page."
+
+  - name: "International Crisis Group (ICG)"
+    homepage_url: "https://www.crisisgroup.org"
+    careers_url: "https://www.crisisgroup.org/careers"
+    category: think_tank
+    fetcher_kind: generic_html
+    fetcher_config: {}
+    geography_tags: [brussels, global]
+    priority: 4
+    enabled: true
+    notes: "Conflict prevention. Brussels HQ, global operations."
+
+  - name: "Australian Institute of International Affairs (AIIA)"
+    homepage_url: "https://www.internationalaffairs.org.au"
+    careers_url: "https://www.internationalaffairs.org.au/about-us/work-with-us/"
+    category: think_tank
+    fetcher_kind: generic_html
+    fetcher_config: {}
+    geography_tags: [global]
+    priority: 3
+    enabled: true
+    notes: "International affairs. Australia."
+
+  # Additional think tanks from docs/02-personal-context.md
+
+  - name: "Resources for the Future (RFF)"
+    homepage_url: "https://www.rff.org"
+    careers_url: "https://www.rff.org/careers/"
+    category: think_tank
+    fetcher_kind: generic_html
+    fetcher_config: {}
+    geography_tags: [dc]
+    priority: 5
+    enabled: true
+    notes: "Most rigorous US energy/environment policy shop."
+
+  - name: "Center on Global Energy Policy at Columbia (CGEP)"
+    homepage_url: "https://www.energypolicy.columbia.edu"
+    careers_url: "https://www.energypolicy.columbia.edu/about-cgep/careers"
+    category: think_tank
+    fetcher_kind: generic_html
+    fetcher_config: {}
+    geography_tags: [nyc]
+    priority: 5
+    enabled: true
+    notes: "Bipartisan, technically deep energy policy. Columbia SIPA."
+
+  - name: "Center for a New American Security (CNAS)"
+    homepage_url: "https://www.cnas.org"
+    careers_url: "https://www.cnas.org/careers"
+    category: think_tank
+    fetcher_kind: generic_html
+    fetcher_config: {}
+    geography_tags: [dc]
+    priority: 5
+    enabled: true
+    notes: "Defense and national security. Bipartisan."
+
+  - name: "Center for Security and Emerging Technology (CSET)"
+    homepage_url: "https://cset.georgetown.edu"
+    careers_url: "https://cset.georgetown.edu/careers"
+    category: think_tank
+    fetcher_kind: generic_html
+    fetcher_config: {}
+    geography_tags: [dc]
+    priority: 5
+    enabled: true
+    notes: "Premier AI and national-security research shop. Georgetown."
+
+  - name: "Hudson Institute"
+    homepage_url: "https://www.hudson.org"
+    careers_url: "https://www.hudson.org/careers"
+    category: think_tank
+    fetcher_kind: generic_html
+    fetcher_config: {}
+    geography_tags: [dc]
+    priority: 5
+    enabled: true
+    notes: "Defense, national security, geopolitics."
+
+  - name: "Royal United Services Institute (RUSI)"
+    homepage_url: "https://rusi.org"
+    careers_url: "https://rusi.org/about/rusi-careers/"
+    category: think_tank
+    fetcher_kind: generic_html
+    fetcher_config: {}
+    geography_tags: [london, global]
+    priority: 5
+    enabled: false
+    notes: "URL returned 404 at seed time; visit rusi.org to find current careers page."
+
+  - name: "Tony Blair Institute for Global Change (TBI)"
+    homepage_url: "https://institute.global"
+    careers_url: "https://institute.global/careers"
+    category: think_tank
+    fetcher_kind: generic_html
+    fetcher_config: {}
+    geography_tags: [london, global]
+    priority: 5
+    enabled: true
+    notes: "Tech & public services, geopolitics. London HQ. Fast-paced."
+
+  - name: "Center for European Policy Analysis (CEPA)"
+    homepage_url: "https://cepa.org"
+    careers_url: "https://cepa.org/work-with-us"
+    category: think_tank
+    fetcher_kind: generic_html
+    fetcher_config: {}
+    geography_tags: [dc, brussels]
+    priority: 4
+    enabled: true
+    notes: "Transatlantic security, Central and Eastern Europe."
+
+  - name: "European Council on Foreign Relations (ECFR)"
+    homepage_url: "https://ecfr.eu"
+    careers_url: "https://ecfr.eu/jobs/"
+    category: think_tank
+    fetcher_kind: generic_html
+    fetcher_config: {}
+    geography_tags: [london, global]
+    priority: 4
+    enabled: true
+    notes: "EU foreign policy. Pan-European. Berlin/London/Paris offices."
+
+  - name: "Mercator Institute for China Studies (MERICS)"
+    homepage_url: "https://merics.org"
+    careers_url: "https://merics.org/en/job-vacancies"
+    category: think_tank
+    fetcher_kind: generic_html
+    fetcher_config: {}
+    geography_tags: [global]
+    priority: 4
+    enabled: false
+    notes: "URL returned 404 at seed time; visit merics.org to find current vacancies."
+
+  - name: "Center for Naval Analyses (CNA)"
+    homepage_url: "https://www.cna.org"
+    careers_url: "https://www.cna.org/careers"
+    category: think_tank
+    fetcher_kind: generic_html
+    fetcher_config: {}
+    geography_tags: [dc]
+    priority: 4
+    enabled: true
+    notes: "Defense analysis. Arlington, VA."
+
+  # ── Asset-manager policy institutes ────────────────────────────────────────
+
+  - name: "BlackRock Investment Institute"
+    homepage_url: "https://www.blackrock.com/us/individual/insights/blackrock-investment-institute"
+    careers_url: "https://careers.blackrock.com/"
+    category: asset_manager_policy_institute
+    fetcher_kind: workday_json
+    fetcher_config: {}
+    geography_tags: [nyc, london, bay_area]
+    priority: 5
+    enabled: true
+    notes: "Elite macro/geopolitical research team within BlackRock."
+
+  - name: "KKR Global Institute"
+    homepage_url: "https://www.kkr.com/global-institute"
+    careers_url: "https://www.kkr.com/careers"
+    category: asset_manager_policy_institute
+    fetcher_kind: generic_html
+    fetcher_config: {}
+    geography_tags: [nyc]
+    priority: 5
+    enabled: true
+    notes: "Geopolitics + defense industrial base lens. Hires at junior level."
+
+  - name: "Carlyle Group — Strategy & Research"
+    homepage_url: "https://www.carlyle.com"
+    careers_url: "https://www.carlyle.com/about-carlyle/careers"
+    category: asset_manager_policy_institute
+    fetcher_kind: generic_html
+    fetcher_config: {}
+    geography_tags: [dc, nyc]
+    priority: 5
+    enabled: true
+    notes: "Geopolitical strategy / Carlyle Insight research group."
+
+  - name: "Apollo Global Management — Strategic Research"
+    homepage_url: "https://www.apollo.com"
+    careers_url: "https://www.apollo.com/careers"
+    category: asset_manager_policy_institute
+    fetcher_kind: generic_html
+    fetcher_config: {}
+    geography_tags: [nyc]
+    priority: 5
+    enabled: true
+    notes: "Strategic research and economics at Apollo."
+
+  - name: "Bridgewater Associates — Research"
+    homepage_url: "https://www.bridgewater.com"
+    careers_url: "https://www.bridgewater.com/careers"
+    category: asset_manager_policy_institute
+    fetcher_kind: generic_html
+    fetcher_config: {}
+    geography_tags: [nyc]
+    priority: 5
+    enabled: true
+    notes: "Macro research. Westport CT / NYC."
+
+  - name: "Goldman Sachs Global Investment Research"
+    homepage_url: "https://www.goldmansachs.com/our-firm/about-gs/divisions/global-investment-research/"
+    careers_url: "https://www.goldmansachs.com/careers/"
+    category: asset_manager_policy_institute
+    fetcher_kind: workday_json
+    fetcher_config: {}
+    geography_tags: [nyc, london]
+    priority: 5
+    enabled: true
+    notes: "GIR geopolitical desk. Filter for Research / Economics / Policy roles."
+
+  # ── Geopolitical-risk firms ─────────────────────────────────────────────────
+
+  - name: "Eurasia Group"
+    homepage_url: "https://www.eurasiagroup.net"
+    careers_url: "https://www.eurasiagroup.net/careers"
+    category: geopolitical_risk
+    fetcher_kind: generic_html
+    fetcher_config: {}
+    geography_tags: [nyc, dc, london, global]
+    priority: 5
+    enabled: true
+    notes: "Geo-technology practice relevant. McKinsey-pace, accepts 1–3 years experience."
+
+  - name: "Rhodium Group"
+    homepage_url: "https://rhg.com"
+    careers_url: "https://rhg.com/about/careers/"
+    category: geopolitical_risk
+    fetcher_kind: generic_html
+    fetcher_config: {}
+    geography_tags: [nyc, bay_area]
+    priority: 5
+    enabled: true
+    notes: "Quantitative policy research — China, energy/climate, supply chains."
+
+  - name: "Macro Advisory Partners"
+    homepage_url: "https://macroadvisorypartners.com"
+    careers_url: "https://macroadvisorypartners.com/careers/"
+    category: geopolitical_risk
+    fetcher_kind: generic_html
+    fetcher_config: {}
+    geography_tags: [nyc, london]
+    priority: 5
+    enabled: true
+    notes: "Geo-economic risk advisory. NYC and London."
+
+  - name: "Control Risks"
+    homepage_url: "https://www.controlrisks.com"
+    careers_url: "https://www.controlrisks.com/careers"
+    category: geopolitical_risk
+    fetcher_kind: generic_html
+    fetcher_config: {}
+    geography_tags: [london, global]
+    priority: 5
+    enabled: true
+    notes: "Political and security risk advisory. London HQ."
+
+  - name: "Teneo"
+    homepage_url: "https://www.teneo.com"
+    careers_url: "https://www.teneo.com/careers/"
+    category: geopolitical_risk
+    fetcher_kind: generic_html
+    fetcher_config: {}
+    geography_tags: [london, nyc]
+    priority: 5
+    enabled: true
+    notes: "Risk advisory and strategic communications. London and NYC."
+
+  - name: "The Asia Group"
+    homepage_url: "https://theasiagroup.com"
+    careers_url: "https://theasiagroup.com/careers"
+    category: geopolitical_risk
+    fetcher_kind: generic_html
+    fetcher_config: {}
+    geography_tags: [dc]
+    priority: 5
+    enabled: true
+    notes: "Asia-focused geopolitical risk. DC-based."
+
+  # ── Corporate policy — frontier tech ───────────────────────────────────────
+
+  - name: "Anthropic — Policy"
+    homepage_url: "https://www.anthropic.com"
+    careers_url: "https://www.anthropic.com/jobs"
+    category: corporate_policy_tech
+    fetcher_kind: generic_html
+    fetcher_config: {}
+    geography_tags: [bay_area, dc, london]
+    priority: 5
+    enabled: true
+    notes: "Frontier AI safety and policy team. SF, DC, London."
+
+  - name: "OpenAI — Policy & Global Affairs"
+    homepage_url: "https://openai.com"
+    careers_url: "https://openai.com/careers"
+    category: corporate_policy_tech
+    fetcher_kind: generic_html
+    fetcher_config: {}
+    geography_tags: [bay_area, dc, london]
+    priority: 5
+    enabled: true
+    notes: "Policy and global affairs team. SF, DC, London."
+
+  - name: "Google DeepMind — Policy"
+    homepage_url: "https://deepmind.google"
+    careers_url: "https://deepmind.google/careers/"
+    category: corporate_policy_tech
+    fetcher_kind: generic_html
+    fetcher_config: {}
+    geography_tags: [london, bay_area]
+    priority: 5
+    enabled: true
+    notes: "AI safety & policy roles. London HQ + Mountain View."
+
+  - name: "Microsoft — AI Policy & Responsible AI"
+    homepage_url: "https://www.microsoft.com"
+    careers_url: "https://careers.microsoft.com/"
+    category: corporate_policy_tech
+    fetcher_kind: workday_json
+    fetcher_config: {}
+    geography_tags: [dc, london, global]
+    priority: 5
+    enabled: true
+    notes: "Office of Responsible AI, AI policy. Filter by keyword."
+
+  - name: "Meta — Policy"
+    homepage_url: "https://www.meta.com"
+    careers_url: "https://www.metacareers.com/"
+    category: corporate_policy_tech
+    fetcher_kind: generic_html
+    fetcher_config: {}
+    geography_tags: [bay_area, dc, london]
+    priority: 5
+    enabled: true
+    notes: "Tech policy, AI policy, global affairs. Filter for policy roles."
+
+  # ── Corporate policy — defense tech ────────────────────────────────────────
+
+  - name: "Anduril Industries — Strategy & Policy"
+    homepage_url: "https://www.anduril.com"
+    careers_url: "https://www.anduril.com/careers/"
+    category: corporate_policy_defense
+    fetcher_kind: generic_html
+    fetcher_config: {}
+    geography_tags: [dc, bay_area]
+    priority: 5
+    enabled: true
+    notes: "Defense tech startup. Strategy and policy roles in DC."
+
+  - name: "Palantir — Strategy & Communications"
+    homepage_url: "https://www.palantir.com"
+    careers_url: "https://www.palantir.com/careers/"
+    category: corporate_policy_defense
+    fetcher_kind: generic_html
+    fetcher_config: {}
+    geography_tags: [dc, london, nyc]
+    priority: 5
+    enabled: true
+    notes: "Defense-tech corporate strategy/policy. DC, London, NYC."
+
+  - name: "Shield AI — Strategy"
+    homepage_url: "https://www.shield.ai"
+    careers_url: "https://www.shield.ai/careers/"
+    category: corporate_policy_defense
+    fetcher_kind: generic_html
+    fetcher_config: {}
+    geography_tags: [dc]
+    priority: 5
+    enabled: true
+    notes: "AI-powered defense systems. Strategy roles. San Diego/DC."
+
+  - name: "Saronic Technologies — Strategy"
+    homepage_url: "https://www.saronic.com"
+    careers_url: "https://www.saronic.com/careers"
+    category: corporate_policy_defense
+    fetcher_kind: generic_html
+    fetcher_config: {}
+    geography_tags: [dc]
+    priority: 5
+    enabled: false
+    notes: "URL returned 404 at seed time; very new company — check saronic.com for careers."
+
+  - name: "Lockheed Martin — Strategy"
+    homepage_url: "https://www.lockheedmartin.com"
+    careers_url: "https://www.lockheedmartinjobs.com/"
+    category: corporate_policy_defense
+    fetcher_kind: workday_json
+    fetcher_config: {}
+    geography_tags: [dc]
+    priority: 5
+    enabled: true
+    notes: "Defense prime. Filter for strategy / policy / analyst roles. Bethesda MD."
+
+  # ── Corporate policy — energy ───────────────────────────────────────────────
+
+  - name: "NextEra Energy — Strategy"
+    homepage_url: "https://www.nexteraenergy.com"
+    careers_url: "https://jobs.nexteraenergy.com/"
+    category: corporate_policy_energy
+    fetcher_kind: workday_json
+    fetcher_config: {}
+    geography_tags: [remote]
+    priority: 5
+    enabled: true
+    notes: "Largest US clean-energy company. Juno Beach FL / remote."
+
+  - name: "Form Energy — Strategy"
+    homepage_url: "https://formenergy.com"
+    careers_url: "https://formenergy.com/careers"
+    category: corporate_policy_energy
+    fetcher_kind: generic_html
+    fetcher_config: {}
+    geography_tags: [boston]
+    priority: 5
+    enabled: true
+    notes: "Long-duration energy storage startup. Somerville MA."
+
+  - name: "Commonwealth Fusion Systems — Strategy"
+    homepage_url: "https://cfs.energy"
+    careers_url: "https://cfs.energy/careers"
+    category: corporate_policy_energy
+    fetcher_kind: generic_html
+    fetcher_config: {}
+    geography_tags: [boston]
+    priority: 5
+    enabled: true
+    notes: "Fusion energy startup. Cambridge MA."
+
+  - name: "Helion Energy — Strategy"
+    homepage_url: "https://www.helionenergy.com"
+    careers_url: "https://www.helionenergy.com/careers/"
+    category: corporate_policy_energy
+    fetcher_kind: generic_html
+    fetcher_config: {}
+    geography_tags: [remote]
+    priority: 5
+    enabled: true
+    notes: "Fusion energy startup. Everett WA."
+
+  - name: "Equinor — New Energy / Strategy"
+    homepage_url: "https://www.equinor.com"
+    careers_url: "https://www.equinor.com/careers"
+    category: corporate_policy_energy
+    fetcher_kind: workday_json
+    fetcher_config: {}
+    geography_tags: [london, global]
+    priority: 5
+    enabled: true
+    notes: "Norwegian state energy company. Renewables, LNG, strategy. London + Oslo."
+
+  - name: "Shell — Scenarios & Strategy"
+    homepage_url: "https://www.shell.com"
+    careers_url: "https://www.shell.com/careers.html"
+    category: corporate_policy_energy
+    fetcher_kind: workday_json
+    fetcher_config: {}
+    geography_tags: [london, global]
+    priority: 5
+    enabled: true
+    notes: "Scenarios team, energy policy, strategy. London / The Hague."
+
+  - name: "BP — Strategy"
+    homepage_url: "https://www.bp.com"
+    careers_url: "https://careers.bp.com/"
+    category: corporate_policy_energy
+    fetcher_kind: workday_json
+    fetcher_config: {}
+    geography_tags: [london]
+    priority: 5
+    enabled: true
+    notes: "Energy transition and strategy. London HQ."
+
+  # ── IGOs / YPP-style ────────────────────────────────────────────────────────
+
+  - name: "OECD"
+    homepage_url: "https://www.oecd.org"
+    careers_url: "https://www.oecd.org/careers/"
+    category: igo
+    fetcher_kind: generic_html
+    fetcher_config: {}
+    geography_tags: [paris, global]
+    priority: 5
+    enabled: true
+    notes: "Careers + Young Professionals Programme. Paris."
+
+  - name: "International Energy Agency (IEA)"
+    homepage_url: "https://www.iea.org"
+    careers_url: "https://www.iea.org/careers"
+    category: igo
+    fetcher_kind: generic_html
+    fetcher_config: {}
+    geography_tags: [paris, global]
+    priority: 5
+    enabled: true
+    notes: "Energy analyst and research roles. Paris."
+
+  - name: "World Bank Group — Careers"
+    homepage_url: "https://www.worldbank.org"
+    careers_url: "https://www.worldbank.org/en/about/careers"
+    category: igo
+    fetcher_kind: generic_html
+    fetcher_config: {}
+    geography_tags: [dc, global]
+    priority: 5
+    enabled: true
+    notes: "Young Professionals Programme + research positions. DC."
+
+  - name: "International Monetary Fund (IMF)"
+    homepage_url: "https://www.imf.org"
+    careers_url: "https://www.imf.org/en/About/Recruitment"
+    category: igo
+    fetcher_kind: generic_html
+    fetcher_config: {}
+    geography_tags: [dc, global]
+    priority: 5
+    enabled: true
+    notes: "Economist Program and research roles. DC."
+
+  - name: "European Commission — EPSO"
+    homepage_url: "https://european-union.europa.eu/institutions-law-budget/institutions-and-bodies/institutions/european-commission_en"
+    careers_url: "https://epso.europa.eu/"
+    category: igo
+    fetcher_kind: generic_html
+    fetcher_config: {}
+    geography_tags: [brussels, global]
+    priority: 4
+    enabled: true
+    notes: "EPSO competitions. Application cycles are intermittent."
+
+  - name: "NATO — Careers"
+    homepage_url: "https://www.nato.int"
+    careers_url: "https://www.nato.int/cps/en/natolive/87038.htm"
+    category: igo
+    fetcher_kind: generic_html
+    fetcher_config: {}
+    geography_tags: [brussels, global]
+    priority: 4
+    enabled: false
+    notes: "URL returned 404 at seed time; visit nato.int to find current careers page."
+
+  - name: "UNDP — Careers"
+    homepage_url: "https://www.undp.org"
+    careers_url: "https://jobs.undp.org/"
+    category: igo
+    fetcher_kind: generic_html
+    fetcher_config: {}
+    geography_tags: [nyc, global]
+    priority: 4
+    enabled: true
+    notes: "Development and policy roles across UN system."
+
+  - name: "UN Careers (DPPA / UNEP)"
+    homepage_url: "https://www.un.org"
+    careers_url: "https://careers.un.org/"
+    category: igo
+    fetcher_kind: generic_html
+    fetcher_config: {}
+    geography_tags: [nyc, global]
+    priority: 4
+    enabled: true
+    notes: "Covers UNEP, DPPA, and other UN entities with research-relevant roles."
+
+  # ── Government ──────────────────────────────────────────────────────────────
+
+  - name: "Federal Reserve Board — Research & Analysis"
+    homepage_url: "https://www.federalreserve.gov"
+    careers_url: "https://www.federalreserve.gov/careers.htm"
+    category: government
+    fetcher_kind: generic_html
+    fetcher_config: {}
+    geography_tags: [dc]
+    priority: 4
+    enabled: true
+    notes: "Research assistant and economist roles. DC."
+
+  - name: "Federal Reserve Bank of New York"
+    homepage_url: "https://www.newyorkfed.org"
+    careers_url: "https://www.newyorkfed.org/careers"
+    category: government
+    fetcher_kind: generic_html
+    fetcher_config: {}
+    geography_tags: [nyc]
+    priority: 4
+    enabled: true
+    notes: "Research RA program and analyst roles."
+
+  - name: "Federal Reserve Bank of San Francisco"
+    homepage_url: "https://www.frbsf.org"
+    careers_url: "https://www.frbsf.org/careers/"
+    category: government
+    fetcher_kind: generic_html
+    fetcher_config: {}
+    geography_tags: [bay_area]
+    priority: 4
+    enabled: true
+    notes: "Research RA program. SF-based."
+
+  - name: "Federal Reserve Bank of Boston"
+    homepage_url: "https://www.bostonfed.org"
+    careers_url: "https://www.bostonfed.org/careers"
+    category: government
+    fetcher_kind: generic_html
+    fetcher_config: {}
+    geography_tags: [boston]
+    priority: 4
+    enabled: true
+    notes: "Research RA program. Boston."
+
+  - name: "Federal Reserve Bank of Chicago"
+    homepage_url: "https://www.chicagofed.org"
+    careers_url: "https://www.chicagofed.org/careers"
+    category: government
+    fetcher_kind: generic_html
+    fetcher_config: {}
+    geography_tags: [global]
+    priority: 4
+    enabled: true
+    notes: "Research RA program. Chicago."
+
+  - name: "US Department of Energy — Strategy & Analysis"
+    homepage_url: "https://www.energy.gov"
+    careers_url: "https://www.energy.gov/jobs"
+    category: government
+    fetcher_kind: generic_html
+    fetcher_config: {}
+    geography_tags: [dc]
+    priority: 4
+    enabled: true
+    notes: "Loan Programs Office and strategy/analysis roles. DC."
+
+  - name: "UK Cabinet Office / No.10 Policy Unit"
+    homepage_url: "https://www.gov.uk/government/organisations/cabinet-office"
+    careers_url: "https://www.civilservicejobs.service.gov.uk/"
+    category: government
+    fetcher_kind: generic_html
+    fetcher_config: {}
+    geography_tags: [london]
+    priority: 4
+    enabled: true
+    notes: "Fast Stream and policy adviser roles. London."
+
+  - name: "UK Foreign, Commonwealth & Development Office (FCDO)"
+    homepage_url: "https://www.gov.uk/government/organisations/foreign-commonwealth-development-office"
+    careers_url: "https://www.gov.uk/government/organisations/foreign-commonwealth-development-office"
+    category: government
+    fetcher_kind: generic_html
+    fetcher_config: {}
+    geography_tags: [london, global]
+    priority: 4
+    enabled: false
+    notes: "Jobs subpage not found at seed time; using FCDO homepage as placeholder."
+
+  - name: "Government of Finland — Prime Minister's Office"
+    homepage_url: "https://valtioneuvosto.fi/en/prime-minister-s-office"
+    careers_url: "https://www.valtiolle.fi/en/"
+    category: government
+    fetcher_kind: generic_html
+    fetcher_config: {}
+    geography_tags: [global]
+    priority: 4
+    enabled: true
+    notes: "Finnish PM's Office strategy unit. Helsinki. EU eligibility / Finnish citizenship."
+
+  # ── Predoc / RA programs ────────────────────────────────────────────────────
+
+  - name: "RFF Predoctoral Fellowship"
+    homepage_url: "https://www.rff.org"
+    careers_url: "https://www.rff.org/careers/"
+    category: predoc_program
+    fetcher_kind: generic_html
+    fetcher_config: {}
+    geography_tags: [dc]
+    priority: 5
+    enabled: true
+    notes: "Most rigorous US energy/environment policy RA program. Explicit PhD pipeline."
+
+  - name: "Brookings Research Assistant Program"
+    homepage_url: "https://www.brookings.edu"
+    careers_url: "https://www.brookings.edu/careers/"
+    category: predoc_program
+    fetcher_kind: generic_html
+    fetcher_config: {}
+    geography_tags: [dc]
+    priority: 5
+    enabled: true
+    notes: "Research assistant roles at Brookings. Pre-PhD credential building."
+
+  - name: "CSET Research Analyst"
+    homepage_url: "https://cset.georgetown.edu"
+    careers_url: "https://cset.georgetown.edu/careers"
+    category: predoc_program
+    fetcher_kind: generic_html
+    fetcher_config: {}
+    geography_tags: [dc]
+    priority: 5
+    enabled: true
+    notes: "Premier AI & national-security research analyst pipeline."
+
+  - name: "Becker Friedman Institute (BFI) Predoctoral Fellow"
+    homepage_url: "https://bfi.uchicago.edu"
+    careers_url: "https://bfi.uchicago.edu/jobs/"
+    category: predoc_program
+    fetcher_kind: generic_html
+    fetcher_config: {}
+    geography_tags: [global]
+    priority: 5
+    enabled: true
+    notes: "Pre-doc at University of Chicago economics. Strong PhD pipeline."
+
+  - name: "Federal Reserve Board Research Assistant"
+    homepage_url: "https://www.federalreserve.gov"
+    careers_url: "https://www.federalreserve.gov/careers.htm"
+    category: predoc_program
+    fetcher_kind: generic_html
+    fetcher_config: {}
+    geography_tags: [dc]
+    priority: 5
+    enabled: true
+    notes: "RA positions for pre-PhD economists. DC."
+
+  - name: "Stanford SIEPR Predoctoral Research Fellowship"
+    homepage_url: "https://siepr.stanford.edu"
+    careers_url: "https://siepr.stanford.edu/about/fellowships-and-awards"
+    category: predoc_program
+    fetcher_kind: generic_html
+    fetcher_config: {}
+    geography_tags: [bay_area]
+    priority: 5
+    enabled: false
+    notes: "URL returned 404 at seed time; visit siepr.stanford.edu to find current fellowship page."
+
+  - name: "MIT Sloan Predoctoral Researcher"
+    homepage_url: "https://mitsloan.mit.edu"
+    careers_url: "https://mitsloan.mit.edu/phd/research-assistants"
+    category: predoc_program
+    fetcher_kind: generic_html
+    fetcher_config: {}
+    geography_tags: [boston]
+    priority: 5
+    enabled: true
+    notes: "Pre-doc positions at MIT Sloan economics/finance faculty."
+
+  # ── PhD program calls ─────────────────────────────────────────────────────
+  # careers_url is each program's admissions/apply page.
+  # Step 04 normalizer treats these as posting_type: program_call.
+
+  - name: "Harvard Kennedy School — PhD in Public Policy (Economics Track)"
+    homepage_url: "https://www.hks.harvard.edu"
+    careers_url: "https://www.hks.harvard.edu/educational-programs/doctoral-programs/public-policy"
+    category: phd_program
+    fetcher_kind: generic_html
+    fetcher_config: {}
+    geography_tags: [boston]
+    priority: 5
+    enabled: true
+    notes: "PPOL Economics Track. Application window opens ~September each year."
+
+  - name: "Stanford GSB — PhD Political Economics"
+    homepage_url: "https://www.gsb.stanford.edu"
+    careers_url: "https://www.gsb.stanford.edu/programs/phd/fields/political-economics"
+    category: phd_program
+    fetcher_kind: generic_html
+    fetcher_config: {}
+    geography_tags: [bay_area]
+    priority: 5
+    enabled: true
+    notes: "Stanford GSB Political Economics PhD."
+
+  - name: "Stanford GSB — PhD Economic Analysis & Policy"
+    homepage_url: "https://www.gsb.stanford.edu"
+    careers_url: "https://www.gsb.stanford.edu/programs/phd/fields/economic-analysis-policy"
+    category: phd_program
+    fetcher_kind: generic_html
+    fetcher_config: {}
+    geography_tags: [bay_area]
+    priority: 5
+    enabled: true
+    notes: "Stanford GSB Economic Analysis & Policy PhD."
+
+  - name: "Wharton — PhD Applied Economics"
+    homepage_url: "https://doctoral.wharton.upenn.edu"
+    careers_url: "https://doctoral.wharton.upenn.edu/program/applied-economics-program/"
+    category: phd_program
+    fetcher_kind: generic_html
+    fetcher_config: {}
+    geography_tags: [nyc]
+    priority: 5
+    enabled: true
+    notes: "Wharton Applied Economics PhD. UPenn."
+
+  - name: "Columbia SIPA — PhD Sustainable Development"
+    homepage_url: "https://sipa.columbia.edu"
+    careers_url: "https://sipa.columbia.edu/academics/programs/phd-program-sustainable-development"
+    category: phd_program
+    fetcher_kind: generic_html
+    fetcher_config: {}
+    geography_tags: [nyc]
+    priority: 5
+    enabled: true
+    notes: "Columbia SIPA Sustainable Development PhD."
+
+  - name: "MIT IDSS — PhD Social and Engineering Systems"
+    homepage_url: "https://idss.mit.edu"
+    careers_url: "https://idss.mit.edu/program/ses/"
+    category: phd_program
+    fetcher_kind: generic_html
+    fetcher_config: {}
+    geography_tags: [boston]
+    priority: 5
+    enabled: true
+    notes: "MIT IDSS SES doctoral program."
+
+  - name: "Princeton SPIA — PhD Science, Technology & Environmental Policy (STEP)"
+    homepage_url: "https://spia.princeton.edu"
+    careers_url: "https://spia.princeton.edu/phd-programs/step"
+    category: phd_program
+    fetcher_kind: generic_html
+    fetcher_config: {}
+    geography_tags: [global]
+    priority: 5
+    enabled: true
+    notes: "Princeton SPIA STEP PhD."
+
+  - name: "UC Berkeley — PhD Agricultural & Resource Economics (ARE)"
+    homepage_url: "https://are.berkeley.edu"
+    careers_url: "https://are.berkeley.edu/programs/graduate"
+    category: phd_program
+    fetcher_kind: generic_html
+    fetcher_config: {}
+    geography_tags: [bay_area]
+    priority: 5
+    enabled: true
+    notes: "Berkeley ARE PhD. Strong energy/environment/trade focus."
+
+  - name: "Northwestern Economics — PhD Managerial Economics & Decision Sciences (MECS)"
+    homepage_url: "https://economics.northwestern.edu"
+    careers_url: "https://economics.northwestern.edu/graduate/"
+    category: phd_program
+    fetcher_kind: generic_html
+    fetcher_config: {}
+    geography_tags: [global]
+    priority: 5
+    enabled: true
+    notes: "Northwestern Kellogg MECS PhD with Econ department opt-in."
+
+  - name: "Stanford E-IPER — PhD Environment & Resources"
+    homepage_url: "https://pangea.stanford.edu"
+    careers_url: "https://pangea.stanford.edu/programs/iper"
+    category: phd_program
+    fetcher_kind: generic_html
+    fetcher_config: {}
+    geography_tags: [bay_area]
+    priority: 5
+    enabled: false
+    notes: "URL not confirmed at seed time; e-iper.stanford.edu domain does not resolve."
+
+  - name: "Yale School of the Environment — PhD Environmental Sciences (ENRE)"
+    homepage_url: "https://environment.yale.edu"
+    careers_url: "https://environment.yale.edu/programs/doctoral-programs"
+    category: phd_program
+    fetcher_kind: generic_html
+    fetcher_config: {}
+    geography_tags: [global]
+    priority: 5
+    enabled: true
+    notes: "Yale SoE ENRE doctoral program."
+
+  - name: "University of Pennsylvania — PhD Economics"
+    homepage_url: "https://economics.sas.upenn.edu"
+    careers_url: "https://economics.sas.upenn.edu/graduate/prospective-students/phd-program"
+    category: phd_program
+    fetcher_kind: generic_html
+    fetcher_config: {}
+    geography_tags: [nyc]
+    priority: 5
+    enabled: true
+    notes: "UPenn Economics PhD. Strong relationships from BA."
+
+  - name: "Yale University — PhD Economics"
+    homepage_url: "https://economics.yale.edu"
+    careers_url: "https://economics.yale.edu/graduate"
+    category: phd_program
+    fetcher_kind: generic_html
+    fetcher_config: {}
+    geography_tags: [global]
+    priority: 5
+    enabled: true
+    notes: "Yale Economics PhD."
+
+  # ── Fellowships ──────────────────────────────────────────────────────────────
+
+  - name: "Knight-Hennessy Scholars — Stanford"
+    homepage_url: "https://knight-hennessy.stanford.edu"
+    careers_url: "https://knight-hennessy.stanford.edu/"
+    category: fellowship
+    fetcher_kind: generic_html
+    fetcher_config: {}
+    geography_tags: [bay_area]
+    priority: 5
+    enabled: true
+    notes: "Prestigious postgrad fellowship at Stanford. Annual application cycle."
+
+  - name: "Schwarzman Scholars — Tsinghua"
+    homepage_url: "https://www.schwarzmanscholars.org"
+    careers_url: "https://www.schwarzmanscholars.org/admissions/"
+    category: fellowship
+    fetcher_kind: generic_html
+    fetcher_config: {}
+    geography_tags: [global]
+    priority: 5
+    enabled: true
+    notes: "China-focused leadership fellowship. Annual cycle."
+
+  - name: "Marshall Scholarship"
+    homepage_url: "https://www.marshallscholarship.org"
+    careers_url: "https://www.marshallscholarship.org/apply"
+    category: fellowship
+    fetcher_kind: generic_html
+    fetcher_config: {}
+    geography_tags: [london, global]
+    priority: 5
+    enabled: true
+    notes: "UK graduate study. Annual US competition cycle."
+
+  - name: "Rhodes Scholarship — Oxford"
+    homepage_url: "https://www.rhodeshouse.ox.ac.uk"
+    careers_url: "https://www.rhodeshouse.ox.ac.uk/apply/"
+    category: fellowship
+    fetcher_kind: generic_html
+    fetcher_config: {}
+    geography_tags: [london]
+    priority: 5
+    enabled: true
+    notes: "Oxford graduate study. Annual cycle."
+
+  - name: "Mason Fellowship — Harvard Kennedy School"
+    homepage_url: "https://www.hks.harvard.edu"
+    careers_url: "https://www.hks.harvard.edu/educational-programs/masters-programs/mason-fellows"
+    category: fellowship
+    fetcher_kind: generic_html
+    fetcher_config: {}
+    geography_tags: [boston]
+    priority: 5
+    enabled: true
+    notes: "Mid-career public leadership. HKS Mason program."
+
+  - name: "Belfer Center Fellowships"
+    homepage_url: "https://www.belfercenter.org"
+    careers_url: "https://www.belfercenter.org/fellowships"
+    category: fellowship
+    fetcher_kind: generic_html
+    fetcher_config: {}
+    geography_tags: [boston]
+    priority: 5
+    enabled: true
+    notes: "Research fellowships at Belfer Center, Harvard Kennedy School."
+
+  - name: "TBI Future of Britain Fellowship"
+    homepage_url: "https://institute.global"
+    careers_url: "https://institute.global/about/future-of-britain-fellowship"
+    category: fellowship
+    fetcher_kind: generic_html
+    fetcher_config: {}
+    geography_tags: [london]
+    priority: 5
+    enabled: false
+    notes: "URL returned 404 at seed time; visit institute.global to find current fellowship page."

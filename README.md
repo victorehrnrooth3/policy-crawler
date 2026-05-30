@@ -44,3 +44,37 @@ When I ask you to execute Step N:
 ## Stack at a glance
 
 Python 3.12 · Neon Postgres · Anthropic Claude (Haiku 4.5 → Sonnet 4.6) · Resend · FastAPI · Vercel hobby · GitHub Actions cron. All free tier or near-free for a single user. Full rationale in [`docs/03-tech-stack.md`](docs/03-tech-stack.md).
+
+## Install & test
+
+Requires Python 3.12. From a clean clone:
+
+```bash
+python -m venv .venv
+. .venv/Scripts/activate            # PowerShell: .venv\Scripts\Activate.ps1
+                                    # bash/zsh:   source .venv/bin/activate
+pip install -e .[dev]
+
+ruff check .
+ruff format --check .
+pyright
+pytest -q
+```
+
+All five commands should exit 0 on a fresh checkout. See [`docs/steps/01-scaffolding.md`](docs/steps/01-scaffolding.md) for the canonical acceptance criteria.
+
+## Database setup
+
+1. Create a free-tier Neon project named `policy-crawler` at neon.tech.
+2. Copy the **pooled** connection string (host contains `-pooler.`) into `.env` as `NEON_DATABASE_URL`, and the **direct** one as `NEON_DATABASE_URL_DIRECT`.
+3. Apply the schema:
+
+   ```
+   python migrations/_apply.py
+   ```
+
+   Expect: "Applied 0001_init.sql" then "All migrations up to date."
+
+4. Verify in Neon's SQL editor that all 8 tables and 12 enums exist.
+
+Re-running `python migrations/_apply.py` is a no-op.
