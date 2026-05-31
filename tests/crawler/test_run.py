@@ -90,7 +90,7 @@ def test_upsert_new_job(test_source_id: uuid.UUID) -> None:
     source = _make_source_row(test_source_id)
     job = normalize(_raw("uid-1"), source)
     with connection() as conn, conn.cursor() as cur:
-        _id, is_new, changed = _upsert_job(cur, job, set())
+        _id, is_new, changed = _upsert_job(cur, job)
     assert is_new is True
     assert changed is False
 
@@ -99,8 +99,8 @@ def test_upsert_idempotent(test_source_id: uuid.UUID) -> None:
     source = _make_source_row(test_source_id)
     job = normalize(_raw("uid-2"), source)
     with connection() as conn, conn.cursor() as cur:
-        _upsert_job(cur, job, set())
-        _id, is_new, changed = _upsert_job(cur, job, set())
+        _upsert_job(cur, job)
+        _id, is_new, changed = _upsert_job(cur, job)
     assert is_new is False
     assert changed is False
 
@@ -109,11 +109,11 @@ def test_upsert_content_change_creates_version(test_source_id: uuid.UUID) -> Non
     source = _make_source_row(test_source_id)
     job_v1 = normalize(_raw("uid-3", title="Old Title"), source)
     with connection() as conn, conn.cursor() as cur:
-        _upsert_job(cur, job_v1, set())
+        _upsert_job(cur, job_v1)
 
     job_v2 = normalize(_raw("uid-3", title="New Title"), source)
     with connection() as conn, conn.cursor() as cur:
-        _id, is_new, changed = _upsert_job(cur, job_v2, set())
+        _id, is_new, changed = _upsert_job(cur, job_v2)
         cur.execute("SELECT count(*) AS n FROM job_versions WHERE job_id = %s", (_id,))
         row = cur.fetchone()
     assert is_new is False

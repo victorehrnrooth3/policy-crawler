@@ -638,8 +638,8 @@ sources:
     homepage_url: "https://www.anthropic.com"
     careers_url: "https://www.anthropic.com/jobs"
     category: corporate_policy_tech
-    fetcher_kind: generic_html
-    fetcher_config: {}
+    fetcher_kind: greenhouse
+    fetcher_config: {board: "anthropic"}
     geography_tags: [bay_area, dc, london]
     priority: 5
     enabled: true
@@ -706,8 +706,8 @@ sources:
     homepage_url: "https://www.palantir.com"
     careers_url: "https://www.palantir.com/careers/"
     category: corporate_policy_defense
-    fetcher_kind: generic_html
-    fetcher_config: {}
+    fetcher_kind: lever
+    fetcher_config: {company: "palantir"}
     geography_tags: [dc, london, nyc]
     priority: 5
     enabled: true

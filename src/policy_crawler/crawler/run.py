@@ -20,14 +20,12 @@ logger = structlog.get_logger(__name__)
 
 # ── SQL ─────────────────────────────────────────────────────────────────────────
 
-_SELECT_SOURCES = """
+_SELECT_SOURCES_BASE = """
 SELECT id, name, careers_url, homepage_url, category, fetcher_kind,
        fetcher_config, geography_tags, priority, enabled,
        last_checked_at, last_success_at, notes
 FROM sources
 WHERE enabled = true
-{extra}
-ORDER BY priority DESC, name
 """
 
 _INSERT_RUN = """
@@ -121,7 +119,7 @@ def _content_hash(text: str | None) -> str:
     return hashlib.md5((text or "").encode()).hexdigest()
 
 
-def _upsert_job(cur: Any, job: dict[str, Any], existing_keys: set[str]) -> tuple[UUID, bool, bool]:
+def _upsert_job(cur: Any, job: dict[str, Any]) -> tuple[UUID, bool, bool]:
     """Insert or update one job. Returns (job_id, is_new, content_changed)."""
     source_id = job["source_id"]
     canonical_id = job["canonical_id"]
@@ -183,15 +181,16 @@ def crawl_all(
 ) -> RunSummary:
     summary = RunSummary()
 
-    # Determine which sources to crawl
-    extra_clauses: list[str] = []
+    # Build parameterized sources query to avoid any injection risk
+    sources_sql = _SELECT_SOURCES_BASE
+    source_params: list[Any] = []
     if only_source_name:
-        extra_clauses.append(f"AND name = '{only_source_name.replace(chr(39), chr(39) * 2)}'")
+        sources_sql += " AND name = %s"
+        source_params.append(only_source_name)
     if only_kinds:
-        kinds_sql = ", ".join(f"'{k}'" for k in only_kinds)
-        extra_clauses.append(f"AND fetcher_kind IN ({kinds_sql})")
-
-    sources_sql = _SELECT_SOURCES.format(extra=" ".join(extra_clauses))
+        sources_sql += " AND fetcher_kind::text = ANY(%s)"
+        source_params.append(list(only_kinds))
+    sources_sql += " ORDER BY priority DESC, name"
 
     with connection() as conn, conn.cursor() as cur:
         # Open run row
@@ -201,8 +200,7 @@ def crawl_all(
         run_id: UUID = row["id"]
         summary.run_id = run_id
 
-        # Load enabled sources (dynamic WHERE clause, no user input)
-        cur.execute(sources_sql)  # type: ignore[arg-type]
+        cur.execute(sources_sql, source_params or None)  # type: ignore[arg-type]
         sources = cur.fetchall()
 
     logger.info("crawl.start", run_id=str(run_id), sources=len(sources), kind=kind)
@@ -249,7 +247,7 @@ def crawl_all(
         with connection() as conn, conn.cursor() as cur:
             for job in normalized:
                 try:
-                    _job_id, is_new, changed = _upsert_job(cur, job, seen_dedup_keys)
+                    _job_id, is_new, changed = _upsert_job(cur, job)
                     if is_new:
                         summary.jobs_new += 1
                     elif changed:

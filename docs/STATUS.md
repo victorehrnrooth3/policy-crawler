@@ -2,42 +2,45 @@
 
 Single source of truth for "where are we right now?". Update this file at the end of every meaningful session.
 
-## Snapshot (last updated: 2026-05-30, personal laptop)
+## Snapshot (last updated: 2026-05-31, personal laptop)
 
 | Step | State | Branch | Notes |
 |---|---|---|---|
-| 01 — Scaffolding | **Done, merged to main** | `step-01-scaffolding` (`1587dac`) | All acceptance commands exit 0. |
+| 01 — Scaffolding | **Done, merged to main** | `step-01-scaffolding` | All acceptance commands exit 0. |
 | 02 — Database | **Done, merged to main** | — | Migration applied. Live DB tests pass. |
 | 03 — Source registry | **Done, merged to main** | — | 117 sources seeded. |
-| 04 — Crawler framework | **Done, in progress** | `step-04-crawler` (this branch) | Framework complete. Sources need `fetcher_config` populated before crawl yields jobs. See below. |
+| 04 — Crawler framework | **Done, pushed** | `step-04-crawler` | 591 jobs from Anthropic (Greenhouse) + Palantir (Lever). Idempotent on re-run. Post-audit fixes committed. |
 | 05–11 | Not started | — | — |
 
-## What's on disk right now (this branch)
+## What's on disk right now (step-04-crawler branch)
 
-Everything from Steps 01–03 merged to main, plus Step 04:
+Everything from Steps 01–03 (merged to main), plus:
 
-- `src/policy_crawler/crawler/` — base, registry, 11 fetchers, normalize, dedupe, run.py.
-- `tests/crawler/` — VCR tests for Greenhouse (anthropic board), Lever (palantir), Ashby (ashby); normalize/dedupe unit tests; DB integration tests for upsert/idempotency/versioning.
-- `tests/cassettes/` — recorded VCR cassettes.
-- `pyproject.toml` — added `feedparser~=6.0` and `markdownify~=0.13`.
+- `src/policy_crawler/crawler/` — 11 fetchers, normalize, dedupe, run.py CLI.
+- `tests/crawler/` — VCR cassettes + unit/DB tests.
+- `data/sources.yaml` — 117 sources; Anthropic and Palantir have populated `fetcher_config`.
+- **Post-audit fixes**: `run.py` uses parameterized queries (no string-formatted WHERE clauses); `_upsert_job` signature cleaned up.
 
-## Active note: source configuration needed
+## Live jobs in DB
 
-The crawl runs successfully (status=succeeded, 0 errors) but yields 0 jobs because:
-- All `generic_html` sources have `fetcher_config: {}` (no selectors set yet). Use `python -m policy_crawler.crawler.run --configure-generic-html` to see which sources need selectors.
-- `greenhouse`/`lever`/`ashby` sources in the DB have `fetcher_kind: generic_html` + empty config. To get jobs, update `fetcher_config` in `data/sources.yaml` with the correct board/company/org slug, then re-seed.
-- `workday_json` sources need the careers URL to redirect to a `myworkdayjobs.com` URL, or explicit `fetcher_config.endpoint`.
+After first crawl on 2026-05-31:
+- **Anthropic** (Greenhouse, board=`anthropic`): ~371 roles fetched
+- **Palantir** (Lever, company=`palantir`): ~220 roles fetched
+- Total: 591 seen, 582 new (9 deduped cross-source). Second run: 0 new (idempotent).
 
-**Confirmed working board slugs** (for Step 03 YAML updates):
-- Greenhouse: `anthropic` (371 jobs), `stripe` (474 jobs)
-- Lever: `palantir` (works)
-- Ashby: `ashby` (57 jobs)
+## Sources needing `fetcher_config`
+
+~115 sources are still `generic_html` with empty selectors. To configure more:
+- Greenhouse: Add `{board: "<slug>"}` — slug usually = company name in lowercase
+- Lever: Add `{company: "<slug>"}`
+- Ashby: Add `{org: "<slug>"}`
+- generic_html: Fill in `{selectors: {list_selector: ..., title_selector: ..., url_selector: ...}}`
 
 ## Next concrete actions (in order)
 
-1. Populate `fetcher_config` for a handful of known Greenhouse/Lever/Ashby sources in `data/sources.yaml` and re-seed, so the crawl yields real jobs.
-2. Proceed to Step 05 (preference profile & ranker).
+1. Start Step 05 — Preference profile & ranker: `data/profile.yaml`, `profile.py`, `pass1.py` (Haiku screen), `pass2.py` (Sonnet deep-score), schemas, prompts.
+2. The ~582 jobs in the DB are ready to be scored.
 
 ## Conventions reminder
 
-When kicking off any step, follow the agent preamble in [`docs/04-conventions.md`](04-conventions.md): read 00, 01, 03, 04 end-to-end, skim 02 if the step touches preferences/ranker/sources, then the target step file, then prior step files.
+When kicking off any step, follow the agent preamble in [`docs/04-conventions.md`](04-conventions.md): read 00, 01, 03, 04 end-to-end, skim 02 if the step touches preferences/ranker/sources, then the target step file.
