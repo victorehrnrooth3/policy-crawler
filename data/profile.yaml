@@ -1,0 +1,223 @@
+# Preference profile — v1 seed bootstrapped from docs/02-personal-context.md.
+# This is the runtime artifact used by the ranker.
+# Updated by the weekly self-update (Step 10); changes land via a reviewed PR.
+version: 1
+
+identity:
+  summary: |
+    Oxford MPhil Economics (Distinction). UPenn BA Mathematical Economics (Summa Cum
+    Laude, A/A+ across math/econ courses). Currently McKinsey, on an MGI project.
+    Finnish military background (sodanjohtaja — company commander, 150 troops).
+    Fluent English & Finnish; good French. Finnish (EU) citizenship; UK/EU right to
+    work; US requires sponsorship.
+  cv_url: "https://victorehrnrooth.com"
+
+career_thesis: |
+  Re-launching toward ambitious, quantitatively serious policy work on energy,
+  defense, geopolitics, and tech/AI policy. The "MGI feel" — McKinsey-pace,
+  intellectually serious, policy-flavored — is the reference point for what to
+  optimize toward. Allergic to slow-bureaucratic-only roles, pure finance, and
+  management consulting outside the policy/energy/defense practices.
+
+  Target paths (all positive territory — do not penalize):
+  1. Top US PhD (econ or policy with real math) → academic-quality methods → OECD/
+     IEA/Fed/top think tank/faculty-policy hybrid.
+  2. Geopolitical-risk firm or asset-manager policy institute (Eurasia Group, Rhodium,
+     BlackRock BII, KKR Global Institute).
+  3. Frontier-tech / defense / energy corporate policy (Anthropic, OpenAI, Anduril,
+     NextEra, CFS).
+  4. Think tank or predoc (RFF, Brookings, CGEP, CSET, Belfer, IISS, RUSI, TBI,
+     Bruegel, IFRI).
+  5. IGO / YPP (OECD, WB, IMF, IEA, NATO).
+
+topics:
+  heavy:
+    - name: "energy economics & energy transition"
+      keywords:
+        - energy transition
+        - decarbonization
+        - electricity markets
+        - climate policy
+        - energy security
+        - power markets
+        - clean energy
+        - energy storage
+        - grid
+        - LNG
+        - nuclear
+    - name: "defense & national security"
+      keywords:
+        - defense industrial base
+        - NATO
+        - European defense
+        - defense technology
+        - deterrence
+        - autonomous systems
+        - national security
+        - arms control
+        - geopolitical risk
+        - war
+        - conflict
+    - name: "geopolitics & geo-economics"
+      keywords:
+        - US-China
+        - sanctions
+        - supply chain
+        - critical minerals
+        - trade policy
+        - geoeconomics
+        - geopolitical risk
+        - great power competition
+        - Indo-Pacific
+        - transatlantic
+    - name: "tech & AI policy"
+      keywords:
+        - AI safety
+        - AI governance
+        - frontier AI
+        - semiconductor policy
+        - dual-use technology
+        - AI regulation
+        - technology policy
+        - digital policy
+
+  medium:
+    - name: "industrial organization (energy/telecom/defense)"
+      keywords: [industrial organization, market structure, competition policy]
+    - name: "macroeconomics with policy bite"
+      keywords: [macroeconomics, fiscal policy, monetary policy, central banking, inflation]
+    - name: "climate & resource economics"
+      keywords: [carbon pricing, resource economics, environmental economics, climate finance]
+    - name: "innovation policy"
+      keywords: [R&D policy, technology policy, industrial policy, innovation]
+
+  low:
+    - name: "development economics with infra/energy/trade angle"
+      keywords: [infrastructure finance, energy access, trade development]
+    - name: "European integration"
+      keywords: [EU governance, European integration, EU institutions]
+
+  negative:
+    - name: "pure finance / IB / asset management"
+      keywords:
+        - investment banking
+        - trading desk
+        - portfolio management
+        - sell-side
+        - private equity (without policy lens)
+        - hedge fund
+    - name: "generalist management consulting"
+      keywords:
+        - generalist consulting
+        - business management
+        - strategy consulting (outside policy/energy/defense)
+    - name: "marketing / sales / ops"
+      keywords: [marketing, sales, business development, customer success]
+    - name: "lobbying without research"
+      keywords: [lobbying, government affairs (pure comms), public affairs (pure comms)]
+
+geography:
+  primary: [london]
+  secondary: [nyc, bay_area, boston, dc]
+  acceptable: [paris, brussels, geneva, remote, global]
+  hard_no: []
+  timeline_note: "London now (wife relocating there). US transition expected ~12 months out. Chicago acceptable for PhD/research roles despite not being in secondary list."
+
+seniority_fit: "Early-career to mid-level. 0–4 years experience typical. Senior/exec roles are surface-only."
+
+must_haves:
+  - "Topic match: at least one heavy topic or strong dual-medium overlap"
+  - "Quantitative/analytical character: policy research, modelling, data work, or rigorous strategy — not pure comms/pure ops"
+  - "Geography within primary or secondary (acceptable with strong topic match)"
+  - "Seniority realistic for Oxford MPhil + ~1-2 years McKinsey (generalist early-career)"
+
+dealbreakers:
+  - "US role with explicit 'no visa sponsorship' language (until work authorization status changes)"
+  - "Pure IB / sell-side / trading / portfolio management roles"
+  - "Marketing / sales / pure ops / pure comms"
+  - "Lobbying-without-research (public affairs that is really lobbyist/comms)"
+  - "Location outside acceptable geography set without a high-priority topic-match override"
+
+soft_negatives:
+  - "Slow-bureaucratic-only environment (certain IGOs, some legacy think tanks)"
+  - "Requires 5+ years of relevant experience (still surface; may be useful later)"
+  - "Topic adjacent but not core (e.g., development economics without infra/energy/trade angle)"
+  - "Role looks like 'business management' in a think tank wrapper"
+
+exemplars:
+  liked:
+    - title: "Eurasia Group, Geo-technology Practice, Analyst"
+      company: "Eurasia Group"
+      why: "Geopolitics × tech intersection, McKinsey-pace delivery expectations, accepts 1–3 years experience explicitly. High fit."
+      topic: geopolitics × tech
+
+    - title: "Rhodium Group, Research Associate, China / Energy / Climate"
+      company: "Rhodium Group"
+      why: "Quantitative, rigorous, policy-leaning shop. China/energy/climate topic is exactly in the heavy-topic set."
+      topic: energy × geopolitics × China
+
+    - title: "BlackRock Investment Institute, Macro/Geopolitical Researcher"
+      company: "BlackRock Investment Institute"
+      why: "Elite small research team, policy-flavored macro + geopolitical analysis. Not pure finance — it's the research/strategy layer on top."
+      topic: macro × geopolitics
+
+    - title: "Resources for the Future (RFF), Predoctoral Fellow"
+      company: "Resources for the Future"
+      why: "Most rigorous US energy/environment policy shop. Explicit PhD pipeline value. DC."
+      topic: energy economics predoc
+
+    - title: "Center on Global Energy Policy (CGEP), Research Associate"
+      company: "CGEP"
+      why: "Bipartisan, technically deep, run by ex-officials. Columbia/NYC. Energy policy core."
+      topic: energy policy
+
+    - title: "CSET Research Analyst"
+      company: "Center for Security and Emerging Technology"
+      why: "Premier AI-and-national-security research shop. Hires from consulting + government. DC."
+      topic: AI × security
+
+    - title: "Tony Blair Institute, Tech & Public Services"
+      company: "Tony Blair Institute"
+      why: "Tech-policy positioning, McKinsey-pace, London HQ. Interesting at intersection of tech policy and geopolitics."
+      topic: tech policy × geopolitics
+
+    - title: "IISS, Research Fellow"
+      company: "International Institute for Strategic Studies"
+      why: "Defense/conflict focus, London. Finnish military leadership background is a real differentiator here."
+      topic: defense
+
+    - title: "Anthropic, Policy Analyst"
+      company: "Anthropic"
+      why: "Frontier AI safety and policy. High-stakes, intellectually serious, small team."
+      topic: AI safety policy
+
+    - title: "OECD, Young Professionals Programme / IEA Energy Analyst"
+      company: "OECD / IEA"
+      why: "Multilateral energy + economic policy in Paris. Combines heavy topics."
+      topic: international economics × energy
+
+  disliked:
+    - title: "Goldman Sachs Investment Banking Analyst"
+      company: "Goldman Sachs"
+      why: "Pure IB, no policy or research dimension. Wrong career path."
+      topic: pure finance (dealbreaker)
+
+    - title: "BCG Generalist Consultant"
+      company: "BCG"
+      why: "Generalist consulting outside policy/energy/defense. Not the target."
+      topic: generalist consulting
+
+    - title: "LinkedIn Strategy & Operations Associate"
+      company: "LinkedIn"
+      why: "Generalist tech ops without policy bite. Wrong type of role."
+      topic: generalist ops
+
+    - title: "Public Affairs Manager at a trade association (lobbying-only)"
+      company: "Various"
+      why: "Lobbying-without-research is explicitly excluded. Not substantive policy work."
+      topic: lobbying (dealbreaker)
+
+    - title: "US Startup PM, explicitly no visa sponsorship"
+      company: "Various"
+      why: "Two dealbreakers: PM role (ops/product, not policy) and explicit no-sponsorship."
+      topic: dealbreaker combo

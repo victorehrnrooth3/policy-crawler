@@ -9,17 +9,18 @@ Single source of truth for "where are we right now?". Update this file at the en
 | 01 — Scaffolding | **Done, merged to main** | `step-01-scaffolding` | All acceptance commands exit 0. |
 | 02 — Database | **Done, merged to main** | — | Migration applied. Live DB tests pass. |
 | 03 — Source registry | **Done, merged to main** | — | 117 sources seeded. |
-| 04 — Crawler framework | **Done, pushed** | `step-04-crawler` | 591 jobs from Anthropic (Greenhouse) + Palantir (Lever). Idempotent on re-run. Post-audit fixes committed. |
-| 05–11 | Not started | — | — |
+| 04 — Crawler framework | **Done, merged to main** | — | 591 jobs from Anthropic (Greenhouse) + Palantir (Lever). Idempotent on re-run. Post-audit fixes committed. |
+| 05 — Preference profile & ranker | **Code complete, awaiting live score run** | `step-05-ranker` | All files written + tested. Needs `ANTHROPIC_API_KEY` in `.env` for live scoring. |
+| 06–11 | Not started | — | — |
 
-## What's on disk right now (step-04-crawler branch)
+## What's on disk right now (step-05-ranker branch)
 
-Everything from Steps 01–03 (merged to main), plus:
+Everything from Steps 01–04 (merged to main), plus:
 
-- `src/policy_crawler/crawler/` — 11 fetchers, normalize, dedupe, run.py CLI.
-- `tests/crawler/` — VCR cassettes + unit/DB tests.
-- `data/sources.yaml` — 117 sources; Anthropic and Palantir have populated `fetcher_config`.
-- **Post-audit fixes**: `run.py` uses parameterized queries (no string-formatted WHERE clauses); `_upsert_job` signature cleaned up.
+- `data/profile.yaml` — full preference profile (identity, topics, geography, dealbreakers, exemplars).
+- `src/policy_crawler/ranker/` — profile.py, schemas.py, prompts.py, pass1.py (Haiku), pass2.py (Sonnet), run.py (orchestrator + CLI).
+- `tests/ranker/` — 56 tests, all passing (1 skipped without DB).
+- Ruff + pyright clean.
 
 ## Live jobs in DB
 
@@ -27,6 +28,20 @@ After first crawl on 2026-05-31:
 - **Anthropic** (Greenhouse, board=`anthropic`): ~371 roles fetched
 - **Palantir** (Lever, company=`palantir`): ~220 roles fetched
 - Total: 591 seen, 582 new (9 deduped cross-source). Second run: 0 new (idempotent).
+- **pass1_score**: all NULL (not yet scored — waiting for API key)
+
+## To run first scoring batch
+
+```bash
+# 1. Populate .env with ANTHROPIC_API_KEY
+# 2. Run Pass 1 + Pass 2 on 20 jobs:
+python -m policy_crawler.ranker.run --limit 20
+
+# 3. Verify results:
+# SELECT count(*) FILTER (WHERE pass1_score IS NOT NULL) AS p1,
+#        count(*) FILTER (WHERE pass2_score IS NOT NULL) AS p2
+# FROM jobs;
+```
 
 ## Sources needing `fetcher_config`
 
@@ -38,8 +53,10 @@ After first crawl on 2026-05-31:
 
 ## Next concrete actions (in order)
 
-1. Start Step 05 — Preference profile & ranker: `data/profile.yaml`, `profile.py`, `pass1.py` (Haiku screen), `pass2.py` (Sonnet deep-score), schemas, prompts.
-2. The ~582 jobs in the DB are ready to be scored.
+1. Add `ANTHROPIC_API_KEY` to `.env` and run `python -m policy_crawler.ranker.run --limit 20`.
+2. Verify pass1/pass2 scores land in `jobs` table and `llm_calls` rows are created.
+3. Merge `step-05-ranker` to main.
+4. Start Step 06 — Digest selection & email sender.
 
 ## Conventions reminder
 
