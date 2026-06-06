@@ -1,0 +1,26 @@
+{{ subject }}
+{{ today.strftime('%A, %d %B %Y') }}
+{% if not jobs %}
+
+No new policy roles today. The pipeline is running fine — check back tomorrow.
+{% else %}
+{% for job in jobs %}
+
+---
+
+[{{ job.score }}/100] {{ job.title }}
+{{ job.company }}{% if job.location_raw %} · {{ job.location_raw }}{% endif %} · {{ job.posting_type }}{% if job.is_borderline %} (borderline){% endif %}
+
+{{ job.url }}
+{% if job.reason %}
+{{ job.reason }}
+{% endif %}
+Good fit:    {{ job.up_url }}
+Not for me:  {{ job.down_url }}
+Save:        {{ job.save_url }}
+Full review: {{ job.review_url }}
+{% endfor %}
+{% endif %}
+
+---
+Open inbox: {{ inbox_url }}

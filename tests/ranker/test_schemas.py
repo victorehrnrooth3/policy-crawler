@@ -2,14 +2,22 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 from policy_crawler.ranker.schemas import PASS1_TOOL, PASS2_TOOL
 
+# Cast to Any so pyright doesn't enforce InputSchemaTyped's optional 'properties' key
+# on direct subscript access.  The schemas always populate it; this is a type-system
+# limitation of the Anthropic SDK's TypedDict, not a runtime concern.
+_P1: Any = PASS1_TOOL
+_P2: Any = PASS2_TOOL
 
-def _required_fields(tool: dict) -> set[str]:
+
+def _required_fields(tool: Any) -> set[str]:
     return set(tool["input_schema"].get("required", []))
 
 
-def _properties(tool: dict) -> set[str]:
+def _properties(tool: Any) -> set[str]:
     return set(tool["input_schema"]["properties"].keys())
 
 
@@ -41,32 +49,32 @@ def test_pass1_required_fields_present() -> None:
 
 
 def test_pass1_fit_score_integer_with_range() -> None:
-    fs = PASS1_TOOL["input_schema"]["properties"]["fit_score"]
+    fs = _P1["input_schema"]["properties"]["fit_score"]
     assert fs["type"] == "integer"
     assert fs["minimum"] == 0
     assert fs["maximum"] == 100
 
 
 def test_pass1_confidence_enum() -> None:
-    conf = PASS1_TOOL["input_schema"]["properties"]["confidence"]
+    conf = _P1["input_schema"]["properties"]["confidence"]
     assert conf["type"] == "string"
     assert set(conf["enum"]) == {"low", "medium", "high"}
 
 
 def test_pass1_posting_type_enum() -> None:
-    pt = PASS1_TOOL["input_schema"]["properties"]["posting_type"]
+    pt = _P1["input_schema"]["properties"]["posting_type"]
     expected = {"role", "fellowship", "predoc", "program_call", "internal_rotation", "unknown"}
     assert set(pt["enum"]) == expected
 
 
 def test_pass1_geography_match_enum() -> None:
-    gm = PASS1_TOOL["input_schema"]["properties"]["geography_match"]
+    gm = _P1["input_schema"]["properties"]["geography_match"]
     expected = {"primary", "secondary", "acceptable", "mismatch", "unknown"}
     assert set(gm["enum"]) == expected
 
 
 def test_pass1_dealbreaker_hits_array_of_strings() -> None:
-    db = PASS1_TOOL["input_schema"]["properties"]["dealbreaker_hits"]
+    db = _P1["input_schema"]["properties"]["dealbreaker_hits"]
     assert db["type"] == "array"
     assert db["items"]["type"] == "string"
 
@@ -99,25 +107,25 @@ def test_pass2_required_fields_present() -> None:
 
 
 def test_pass2_fit_score_integer_with_range() -> None:
-    fs = PASS2_TOOL["input_schema"]["properties"]["fit_score"]
+    fs = _P2["input_schema"]["properties"]["fit_score"]
     assert fs["type"] == "integer"
     assert fs["minimum"] == 0
     assert fs["maximum"] == 100
 
 
 def test_pass2_recommended_action_enum() -> None:
-    ra = PASS2_TOOL["input_schema"]["properties"]["recommended_action"]
+    ra = _P2["input_schema"]["properties"]["recommended_action"]
     expected = {"apply_now", "monitor", "skip", "needs_human_review"}
     assert set(ra["enum"]) == expected
 
 
 def test_pass2_matched_signals_array_of_strings() -> None:
-    ms = PASS2_TOOL["input_schema"]["properties"]["matched_signals"]
+    ms = _P2["input_schema"]["properties"]["matched_signals"]
     assert ms["type"] == "array"
     assert ms["items"]["type"] == "string"
 
 
 def test_pass2_missing_info_array_of_strings() -> None:
-    mi = PASS2_TOOL["input_schema"]["properties"]["missing_info"]
+    mi = _P2["input_schema"]["properties"]["missing_info"]
     assert mi["type"] == "array"
     assert mi["items"]["type"] == "string"

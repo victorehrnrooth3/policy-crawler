@@ -48,6 +48,9 @@ playwright = ["playwright~=1.47"]
 [tool.setuptools.packages.find]
 where = ["src"]
 
+[tool.setuptools.package-data]
+"policy_crawler.digest" = ["templates/*.j2"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-ra"

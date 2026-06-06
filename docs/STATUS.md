@@ -2,7 +2,7 @@
 
 Single source of truth for "where are we right now?". Update this file at the end of every meaningful session.
 
-## Snapshot (last updated: 2026-05-31, personal laptop)
+## Snapshot (last updated: 2026-06-06, personal laptop)
 
 | Step | State | Branch | Notes |
 |---|---|---|---|
@@ -10,17 +10,20 @@ Single source of truth for "where are we right now?". Update this file at the en
 | 02 — Database | **Done, merged to main** | — | Migration applied. Live DB tests pass. |
 | 03 — Source registry | **Done, merged to main** | — | 117 sources seeded. |
 | 04 — Crawler framework | **Done, merged to main** | — | 591 jobs from Anthropic (Greenhouse) + Palantir (Lever). Idempotent on re-run. Post-audit fixes committed. |
-| 05 — Preference profile & ranker | **Code complete, awaiting live score run** | `step-05-ranker` | All files written + tested. Needs `ANTHROPIC_API_KEY` in `.env` for live scoring. |
-| 06–11 | Not started | — | — |
+| 05 — Preference profile & ranker | **Code complete, live scoring confirmed working** | `step-05-ranker` | Live scoring ran successfully. Palantir jobs score low (5–25) and skip — not a real target. Awaiting merge to main. |
+| 06 — Email digest | **Code complete** | `step-06-email-digest` | tokens, compose, template, send, 33 tests passing. Needs Resend API key + verified domain to send real email. |
+| 07–11 | Not started | — | — |
 
-## What's on disk right now (step-05-ranker branch)
+## What's on disk right now (step-06-email-digest branch)
 
 Everything from Steps 01–04 (merged to main), plus:
 
 - `data/profile.yaml` — full preference profile (identity, topics, geography, dealbreakers, exemplars).
 - `src/policy_crawler/ranker/` — profile.py, schemas.py, prompts.py, pass1.py (Haiku), pass2.py (Sonnet), run.py (orchestrator + CLI).
 - `tests/ranker/` — 56 tests, all passing (1 skipped without DB).
-- Ruff + pyright clean.
+- `src/policy_crawler/digest/` — tokens.py, compose.py, template.py, send.py, __main__.py + Jinja2 templates.
+- `tests/digest/` — 33 tests, all passing (1 skipped without DB).
+- Ruff + pyright clean (0 errors).
 
 ## Live jobs in DB
 
@@ -53,10 +56,11 @@ python -m policy_crawler.ranker.run --limit 20
 
 ## Next concrete actions (in order)
 
-1. Add `ANTHROPIC_API_KEY` to `.env` and run `python -m policy_crawler.ranker.run --limit 20`.
-2. Verify pass1/pass2 scores land in `jobs` table and `llm_calls` rows are created.
-3. Merge `step-05-ranker` to main.
-4. Start Step 06 — Digest selection & email sender.
+1. Populate remaining `.env` secrets: `RESEND_API_KEY`, `DIGEST_FROM_EMAIL`, `DIGEST_TO_EMAIL`, `WEBAPP_BASE_URL`, `TOKEN_HMAC_SECRET`.
+2. Dry-run the digest: `python -m policy_crawler.digest --dry-run` → opens `out/digest-YYYY-MM-DD.html`.
+3. Send a real email: `python -m policy_crawler.digest --send` → confirm receipt.
+4. Merge `step-05-ranker` to main, then merge `step-06-email-digest` to main.
+5. Start Step 07 — Vote endpoint + webapp.
 
 ## Conventions reminder
 

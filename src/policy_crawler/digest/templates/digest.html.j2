@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ subject }}</title>
+</head>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px 16px; font-size: 16px; line-height: 1.5;">
+
+  <h1 style="font-size: 20px; font-weight: 600; margin: 0 0 4px;">{{ subject }}</h1>
+  <p style="margin: 0 0 32px; font-size: 14px;">{{ today.strftime('%A, %d %B %Y') }}</p>
+
+  {% if not jobs %}
+  <p>No new policy roles today. The pipeline is running fine &#8212; check back tomorrow.</p>
+  {% else %}
+  {% for job in jobs %}
+  <div style="padding: 0 0 0 16px; margin: 0 0 28px; border-left: 3px solid;">
+    <p style="margin: 0 0 2px; font-size: 11px; letter-spacing: 0.04em; text-transform: uppercase;">{{ job.posting_type }}{% if job.is_borderline %} &middot; borderline{% endif %}</p>
+    <h2 style="font-size: 17px; font-weight: 600; margin: 0 0 3px;">
+      <a href="{{ job.url }}" style="color: inherit; text-decoration: none;">{{ job.title }}</a>
+    </h2>
+    <p style="margin: 0 0 8px; font-size: 14px;">
+      {{ job.company }}{% if job.location_raw %} &middot; {{ job.location_raw }}{% endif %} &middot; <strong>{{ job.score }}/100</strong>
+    </p>
+    {% if job.reason %}
+    <p style="margin: 0 0 10px; font-size: 14px;">{{ job.reason }}</p>
+    {% endif %}
+    <p style="margin: 0; font-size: 14px;">
+      <a href="{{ job.up_url }}" style="text-decoration: none; margin-right: 14px;">&#128077; Good fit</a><a href="{{ job.down_url }}" style="text-decoration: none; margin-right: 14px;">&#128078; Not for me</a><a href="{{ job.save_url }}" style="text-decoration: none; margin-right: 14px;">&#128278; Save</a><a href="{{ job.review_url }}" style="text-decoration: none;">Full review &rarr;</a>
+    </p>
+  </div>
+  {% endfor %}
+  {% endif %}
+
+  <hr style="border: none; border-top: 1px solid; margin: 32px 0 16px;">
+  <p style="font-size: 12px; margin: 0;">
+    <a href="{{ inbox_url }}" style="color: inherit; text-decoration: none;">Open inbox</a> &middot; Policy Crawler
+  </p>
+
+</body>
+</html>
