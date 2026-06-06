@@ -1,11 +1,14 @@
 {
-  "functions": {
-    "src/policy_crawler/webapp/main.py": {}
-  },
-  "rewrites": [
+  "builds": [
     {
-      "source": "/(.*)",
-      "destination": "/src/policy_crawler/webapp/main.py"
+      "src": "src/policy_crawler/webapp/main.py",
+      "use": "@vercel/python"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "src/policy_crawler/webapp/main.py"
     }
   ]
 }
