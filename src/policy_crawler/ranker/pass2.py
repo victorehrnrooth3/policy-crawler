@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass
 from typing import Any
 from uuid import UUID
@@ -35,6 +36,20 @@ class Pass2Result:
     cost_usd: float
     model: str = _MODEL
     error: str | None = None
+
+
+def _as_str_list(val: Any) -> list[str]:
+    """Normalize tool output that may be a list OR a JSON-encoded string to list[str]."""
+    if isinstance(val, list):
+        return [str(x) for x in val]
+    if isinstance(val, str):
+        try:
+            parsed = json.loads(val)
+            if isinstance(parsed, list):
+                return [str(x) for x in parsed]
+        except (ValueError, TypeError):
+            pass
+    return []
 
 
 def _cost(input_tokens: int, output_tokens: int) -> float:
@@ -123,8 +138,8 @@ def deep_score(
                 fit_score=int(tool_input["fit_score"]),
                 reason_to_consider=tool_input.get("reason_to_consider") or "",
                 concerns=tool_input.get("concerns") or "",
-                matched_signals=tool_input.get("matched_signals") or [],
-                missing_info=tool_input.get("missing_info") or [],
+                matched_signals=_as_str_list(tool_input.get("matched_signals")),
+                missing_info=_as_str_list(tool_input.get("missing_info")),
                 recommended_action=tool_input.get("recommended_action") or "needs_human_review",
                 input_tokens=usage.input_tokens,
                 output_tokens=usage.output_tokens,

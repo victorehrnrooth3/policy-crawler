@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass
 from typing import Any
 from uuid import UUID
@@ -36,6 +37,20 @@ class Pass1Result:
     cost_usd: float
     model: str = _MODEL
     error: str | None = None
+
+
+def _as_str_list(val: Any) -> list[str]:
+    """Normalize tool output that may be a list OR a JSON-encoded string to list[str]."""
+    if isinstance(val, list):
+        return [str(x) for x in val]
+    if isinstance(val, str):
+        try:
+            parsed = json.loads(val)
+            if isinstance(parsed, list):
+                return [str(x) for x in parsed]
+        except (ValueError, TypeError):
+            pass
+    return []
 
 
 def _cost(input_tokens: int, output_tokens: int) -> float:
@@ -128,7 +143,7 @@ def screen(
                 confidence=tool_input["confidence"],
                 posting_type=tool_input["posting_type"],
                 geography_match=tool_input["geography_match"],
-                dealbreaker_hits=tool_input.get("dealbreaker_hits") or [],
+                dealbreaker_hits=_as_str_list(tool_input.get("dealbreaker_hits")),
                 screen_reason=tool_input.get("screen_reason") or "",
                 input_tokens=usage.input_tokens,
                 output_tokens=usage.output_tokens,
