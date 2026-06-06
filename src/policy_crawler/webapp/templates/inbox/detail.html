@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% block title %}{{ job.title }}{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1>{{ job.title }}</h1>
+  <a href="{{ job.url }}" target="_blank" rel="noopener" class="btn-primary">View posting &rarr;</a>
+</div>
+
+<div class="card">
+  <div class="job-meta">
+    <span><strong>{{ job.company }}</strong></span>
+    {% if job.location_raw %}<span>{{ job.location_raw }}</span>{% endif %}
+    <span class="tag">{{ job.posting_type }}</span>
+    <span class="muted">{{ job.source_name }}</span>
+  </div>
+
+  <div class="scores">
+    {% if job.pass2_score %}
+    <div class="score-block">
+      <span class="score-label">Pass 2 score</span>
+      <span class="score">{{ job.pass2_score }}/100</span>
+    </div>
+    {% endif %}
+    {% if job.pass1_score %}
+    <div class="score-block">
+      <span class="score-label">Pass 1 score</span>
+      <span class="score">{{ job.pass1_score }}/100</span>
+    </div>
+    {% endif %}
+  </div>
+
+  {% if job.pass2_reason_to_consider %}
+  <h3>Why consider</h3>
+  <p>{{ job.pass2_reason_to_consider }}</p>
+  {% endif %}
+  {% if job.pass2_concerns %}
+  <h3>Concerns</h3>
+  <p>{{ job.pass2_concerns }}</p>
+  {% endif %}
+  {% if job.pass2_matched_signals %}
+  <h3>Matched signals</h3>
+  <ul>{% for s in job.pass2_matched_signals %}<li>{{ s }}</li>{% endfor %}</ul>
+  {% endif %}
+  {% if job.pass1_reason %}
+  <h3>Screen reason</h3>
+  <p>{{ job.pass1_reason }}</p>
+  {% endif %}
+  {% if job.description_clean %}
+  <h3>Description</h3>
+  <pre class="description">{{ job.description_clean }}</pre>
+  {% endif %}
+</div>
+
+<div class="card">
+  <h2>Vote</h2>
+  <div class="vote-row">
+    <form method="post" action="/v/webapp/{{ job.id }}/up">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <button type="submit" class="btn-vote up">&#128077; Up</button>
+    </form>
+    <form method="post" action="/v/webapp/{{ job.id }}/down">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <button type="submit" class="btn-vote down">&#128078; Down</button>
+    </form>
+    <form method="post" action="/v/webapp/{{ job.id }}/save">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <button type="submit" class="btn-vote save">&#128278; Save</button>
+    </form>
+  </div>
+
+  <form method="post" action="/inbox/{{ job.id }}/feedback" class="mt">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <label for="freetext">Add a note:</label>
+    <textarea id="freetext" name="freetext" rows="3" placeholder="Your thoughts..."></textarea>
+    <button type="submit" class="btn-secondary">Save note</button>
+  </form>
+</div>
+
+{% if feedbacks %}
+<div class="card">
+  <h2>Feedback history</h2>
+  {% for f in feedbacks %}
+  <div class="feedback-row">
+    <span class="tag">{{ f.vote }}</span>
+    <span class="muted">{{ f.source }}</span>
+    {% if f.freetext %}<p>{{ f.freetext }}</p>{% endif %}
+    <small class="muted">{{ f.created_at }}</small>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+{% endblock %}

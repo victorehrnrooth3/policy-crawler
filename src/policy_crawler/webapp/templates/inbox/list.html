@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}Inbox{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1>Inbox <span class="badge">{{ jobs | length }}</span></h1>
+  <form method="get" action="/inbox" class="filter-row">
+    <select name="posting_type">
+      <option value="">All types</option>
+      <option value="role" {% if posting_type == "role" %}selected{% endif %}>Role</option>
+      <option value="fellowship" {% if posting_type == "fellowship" %}selected{% endif %}>Fellowship</option>
+      <option value="predoc" {% if posting_type == "predoc" %}selected{% endif %}>Predoc</option>
+      <option value="program_call" {% if posting_type == "program_call" %}selected{% endif %}>Program call</option>
+    </select>
+    <select name="min_score">
+      <option value="0" {% if min_score == 0 %}selected{% endif %}>Any score</option>
+      <option value="60" {% if min_score == 60 %}selected{% endif %}>&#8805;60</option>
+      <option value="75" {% if min_score == 75 %}selected{% endif %}>&#8805;75</option>
+    </select>
+    <select name="feedback_state">
+      <option value="">All</option>
+      <option value="unrated" {% if feedback_state == "unrated" %}selected{% endif %}>Unrated</option>
+      <option value="up" {% if feedback_state == "up" %}selected{% endif %}>Upvoted</option>
+      <option value="down" {% if feedback_state == "down" %}selected{% endif %}>Downvoted</option>
+      <option value="save" {% if feedback_state == "save" %}selected{% endif %}>Saved</option>
+    </select>
+    <button type="submit">Filter</button>
+  </form>
+</div>
+
+{% if not jobs %}
+<p class="muted">No jobs match the current filters in the last 14 days.</p>
+{% endif %}
+
+{% for job in jobs %}
+<div class="card job-card">
+  <div class="job-header">
+    <a href="/inbox/{{ job.id }}" class="job-title">{{ job.title }}</a>
+    <span class="score">{{ job.pass2_score or job.pass1_score or '—' }}/100</span>
+  </div>
+  <div class="job-meta">
+    <span>{{ job.company }}</span>
+    {% if job.location_raw %}<span>{{ job.location_raw }}</span>{% endif %}
+    <span class="tag">{{ job.posting_type }}</span>
+    <span class="muted">{{ job.source_name }}</span>
+  </div>
+  {% if job.pass2_reason_to_consider %}
+  <p class="reason">{{ job.pass2_reason_to_consider }}</p>
+  {% endif %}
+  <div class="vote-row">
+    <form method="post" action="/v/webapp/{{ job.id }}/up">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <button type="submit" class="btn-vote up" title="Up">&#128077;</button>
+    </form>
+    <form method="post" action="/v/webapp/{{ job.id }}/down">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <button type="submit" class="btn-vote down" title="Down">&#128078;</button>
+    </form>
+    <form method="post" action="/v/webapp/{{ job.id }}/save">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <button type="submit" class="btn-vote save" title="Save">&#128278;</button>
+    </form>
+    <a href="{{ job.url }}" target="_blank" rel="noopener" class="btn-secondary">View posting &rarr;</a>
+  </div>
+</div>
+{% endfor %}
+{% endblock %}

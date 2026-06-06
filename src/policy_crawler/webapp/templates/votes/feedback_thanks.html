@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}Feedback Saved{% endblock %}
+{% block content %}
+<div class="card">
+  {% if expired %}
+  <h1>Window expired</h1>
+  <p>The 30-minute feedback window for this vote has passed.</p>
+  {% else %}
+  <h1>&#10003; Feedback saved</h1>
+  <p>Thanks — your note has been recorded.</p>
+  {% endif %}
+  <p><a href="/inbox">View inbox &rarr;</a></p>
+</div>
+{% endblock %}

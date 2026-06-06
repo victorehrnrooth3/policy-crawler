@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% block title %}Sources{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1>Sources</h1>
+</div>
+
+<div class="tabs">
+  <a href="/sources?tab=active" class="tab{% if tab == 'active' %} active{% endif %}">
+    Active ({{ active | length }})
+  </a>
+  <a href="/sources?tab=pending" class="tab{% if tab == 'pending' %} active{% endif %}">
+    Suggested ({{ pending | length }})
+  </a>
+  <a href="/sources?tab=rejected" class="tab{% if tab == 'rejected' %} active{% endif %}">
+    Rejected/Snoozed ({{ rejected | length }})
+  </a>
+</div>
+
+{% if tab == 'active' %}
+<table class="data-table">
+  <thead>
+    <tr>
+      <th>Name</th><th>Category</th><th>Fetcher</th>
+      <th>Priority</th><th>Last success</th><th></th>
+    </tr>
+  </thead>
+  <tbody>
+  {% for s in active %}
+  <tr class="{% if not s.enabled %}disabled{% endif %}">
+    <td><a href="{{ s.careers_url }}" target="_blank" rel="noopener">{{ s.name }}</a></td>
+    <td>{{ s.category }}</td>
+    <td>{{ s.fetcher_kind }}</td>
+    <td>{{ s.priority }}</td>
+    <td>{{ s.last_success_at or '—' }}</td>
+    <td><a href="/sources/{{ s.id }}/edit">Edit</a></td>
+  </tr>
+  {% endfor %}
+  </tbody>
+</table>
+
+{% elif tab == 'pending' %}
+{% if not pending %}
+<p class="muted">No pending suggestions.</p>
+{% endif %}
+{% for s in pending %}
+<div class="card">
+  <div class="job-header">
+    <a href="{{ s.careers_url }}" target="_blank" rel="noopener" class="job-title">{{ s.name }}</a>
+    <span class="tag">{{ s.category or '?' }}</span>
+    <span class="tag">{{ s.fetcher_kind or '?' }}</span>
+  </div>
+  {% if s.rationale %}<p>{{ s.rationale }}</p>{% endif %}
+  <div class="vote-row">
+    <form method="post" action="/sources/suggested/{{ s.id }}/approve">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <button type="submit" class="btn-vote up">&#10003; Approve</button>
+    </form>
+    <form method="post" action="/sources/suggested/{{ s.id }}/snooze">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <button type="submit" class="btn-secondary">Snooze</button>
+    </form>
+    <form method="post" action="/sources/suggested/{{ s.id }}/reject">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <button type="submit" class="btn-vote down">&#10007; Reject</button>
+    </form>
+  </div>
+</div>
+{% endfor %}
+
+{% else %}
+<table class="data-table">
+  <thead><tr><th>Name</th><th>Status</th><th>Decided</th></tr></thead>
+  <tbody>
+  {% for s in rejected %}
+  <tr>
+    <td><a href="{{ s.careers_url }}" target="_blank" rel="noopener">{{ s.name }}</a></td>
+    <td>{{ s.status }}</td>
+    <td>{{ s.decided_at or '—' }}</td>
+  </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% endif %}
+{% endblock %}

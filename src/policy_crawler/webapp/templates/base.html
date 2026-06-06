@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Policy Crawler{% endblock %}</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  {% block nav %}
+  <nav>
+    <a href="/inbox">Inbox</a>
+    <a href="/sources">Sources</a>
+    <a href="/profile">Profile</a>
+    <a href="/status">Status</a>
+    <a href="/manual">Manual</a>
+  </nav>
+  {% endblock %}
+  <main>
+    {% block content %}{% endblock %}
+  </main>
+  <footer>
+    <small>Policy Crawler</small>
+  </footer>
+</body>
+</html>

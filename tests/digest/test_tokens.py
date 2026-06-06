@@ -101,18 +101,17 @@ def test_malformed_token_returns_none() -> None:
 
 
 def test_missing_secret_raises() -> None:
-    from policy_crawler.config import get_settings
+    from unittest.mock import MagicMock, patch
+
+    from policy_crawler.config import Settings
     from policy_crawler.digest.tokens import make_token
 
-    get_settings.cache_clear()
-    import os
+    # Patch get_settings so that token_hmac_secret is None regardless of .env content.
+    mock_settings = MagicMock(spec=Settings)
+    mock_settings.token_hmac_secret = None
 
-    original = os.environ.pop("TOKEN_HMAC_SECRET", None)
-    try:
-        get_settings.cache_clear()
-        with pytest.raises(RuntimeError, match="TOKEN_HMAC_SECRET"):
-            make_token({"x": 1}, "vote", timedelta(days=1))
-    finally:
-        if original is not None:
-            os.environ["TOKEN_HMAC_SECRET"] = original
-        get_settings.cache_clear()
+    with (
+        patch("policy_crawler.digest.tokens.get_settings", return_value=mock_settings),
+        pytest.raises(RuntimeError, match="TOKEN_HMAC_SECRET"),
+    ):
+        make_token({"x": 1}, "vote", timedelta(days=1))

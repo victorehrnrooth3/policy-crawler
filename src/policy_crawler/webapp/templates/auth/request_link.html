@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block nav %}{% endblock %}
+{% block title %}Access Required{% endblock %}
+{% block content %}
+<div class="card center">
+  <h1>Access required</h1>
+  <p>Click the button below to receive a sign-in link by email.</p>
+  <form method="post" action="/auth/magic-link">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <button type="submit" class="btn-primary">Send me a magic link</button>
+  </form>
+</div>
+{% endblock %}

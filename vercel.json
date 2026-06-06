@@ -1,0 +1,13 @@
+{
+  "functions": {
+    "src/policy_crawler/webapp/main.py": {
+      "runtime": "python3.12"
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/src/policy_crawler/webapp/main.py"
+    }
+  ]
+}

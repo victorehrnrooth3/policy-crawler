@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% block title %}Status{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1>Status</h1>
+</div>
+
+<div class="card">
+  <h2>Database</h2>
+  <p>{{ job_count }} total jobs &mdash; {{ scored_count }} scored</p>
+</div>
+
+<div class="card">
+  <h2>Recent runs</h2>
+  {% if not runs %}
+  <p class="muted">No runs recorded.</p>
+  {% else %}
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Kind</th><th>Status</th><th>Started</th><th>Duration</th>
+        <th>Jobs seen</th><th>Jobs new</th><th>LLM calls</th><th>Cost</th>
+      </tr>
+    </thead>
+    <tbody>
+    {% for r in runs %}
+    <tr class="status-{{ r.status }}">
+      <td>{{ r.kind }}</td>
+      <td>{{ r.status }}</td>
+      <td>{{ r.started_at }}</td>
+      <td>
+        {% if r.finished_at %}
+        {{ ((r.finished_at - r.started_at).total_seconds() | int) }}s
+        {% else %}—{% endif %}
+      </td>
+      <td>{{ r.jobs_seen }}</td>
+      <td>{{ r.jobs_new }}</td>
+      <td>{{ r.llm_calls_count }}</td>
+      <td>${{ "%.4f" | format(r.total_cost_usd) }}</td>
+    </tr>
+    {% if r.error %}
+    <tr><td colspan="8" class="error"><small>{{ r.error }}</small></td></tr>
+    {% endif %}
+    {% endfor %}
+    </tbody>
+  </table>
+  {% endif %}
+</div>
+
+{% if llm_stats %}
+<div class="card">
+  <h2>LLM usage (last 7 days)</h2>
+  <table class="data-table">
+    <thead><tr><th>Kind</th><th>Model</th><th>Calls</th><th>Input tokens</th><th>Output tokens</th><th>Cost</th></tr></thead>
+    <tbody>
+    {% for s in llm_stats %}
+    <tr>
+      <td>{{ s.kind }}</td>
+      <td>{{ s.model }}</td>
+      <td>{{ s.calls }}</td>
+      <td>{{ s.total_input or 0 }}</td>
+      <td>{{ s.total_output or 0 }}</td>
+      <td>${{ "%.4f" | format(s.total_cost) }}</td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+
+<div class="card">
+  <h2>Sources ({{ sources | length }})</h2>
+  <table class="data-table">
+    <thead><tr><th>Name</th><th>Kind</th><th>Enabled</th><th>Last success</th></tr></thead>
+    <tbody>
+    {% for s in sources %}
+    <tr class="{% if not s.enabled %}disabled{% endif %}">
+      <td>{{ s.name }}</td>
+      <td>{{ s.fetcher_kind }}</td>
+      <td>{{ 'yes' if s.enabled else 'no' }}</td>
+      <td>{{ s.last_success_at or '—' }}</td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

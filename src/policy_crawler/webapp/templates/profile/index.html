@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}Profile{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1>Preference Profile</h1>
+</div>
+
+{% if pending_changes %}
+<div class="card">
+  <h2>Pending changes <span class="badge">{{ pending_changes | length }}</span></h2>
+  {% for change in pending_changes %}
+  <div class="change-card">
+    <pre class="mono small">{{ change.diff | tojson(indent=2) }}</pre>
+    {% if change.rationale_per_change %}
+    <details>
+      <summary>Rationale</summary>
+      <pre class="mono small">{{ change.rationale_per_change | tojson(indent=2) }}</pre>
+    </details>
+    {% endif %}
+    <div class="vote-row">
+      <form method="post" action="/profile/changes/{{ change.id }}/approve">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <button type="submit" class="btn-vote up">&#10003; Approve</button>
+      </form>
+      <form method="post" action="/profile/changes/{{ change.id }}/reject">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <button type="submit" class="btn-vote down">&#10007; Reject</button>
+      </form>
+    </div>
+    <small class="muted">Proposed {{ change.proposed_at }}</small>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<div class="card">
+  <h2>Current profile</h2>
+  {% if profile %}
+  <pre class="mono">{{ profile | tojson(indent=2) }}</pre>
+  {% else %}
+  <p class="muted">No profile loaded.</p>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block nav %}{% endblock %}
+{% block title %}Check your email{% endblock %}
+{% block content %}
+<div class="card center">
+  <h1>Check your email</h1>
+  <p>A sign-in link has been sent. Click it to access Policy Crawler.</p>
+  {% if link %}
+  <p class="muted"><small>Dev mode — link: <a href="{{ link }}">{{ link }}</a></small></p>
+  {% endif %}
+  {% if message %}
+  <p class="error">{{ message }}</p>
+  {% endif %}
+</div>
+{% endblock %}

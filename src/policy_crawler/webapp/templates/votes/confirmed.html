@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}Vote Recorded{% endblock %}
+{% block content %}
+<div class="card">
+  <h1>&#10003; Vote recorded</h1>
+  <p>You voted <strong>{{ action }}</strong> for <strong>{{ job_title }}</strong>.</p>
+  <form method="post" action="/v/feedback/{{ token }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <label for="freetext">Optional note:</label>
+    <textarea id="freetext" name="freetext" rows="3" placeholder="Any thoughts on this posting?"></textarea>
+    <button type="submit" class="btn-secondary">Submit note</button>
+  </form>
+  <p class="mt"><a href="/inbox">View inbox &rarr;</a></p>
+</div>
+{% endblock %}

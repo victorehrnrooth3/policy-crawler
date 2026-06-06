@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Edit Source — {{ source.name }}{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1>Edit: {{ source.name }}</h1>
+  <a href="/sources" class="btn-secondary">&larr; Back</a>
+</div>
+<div class="card">
+  <form method="post" action="/sources/{{ source.id }}/edit">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+    <label>Fetcher kind</label>
+    <select name="fetcher_kind">
+      {% for kind in ['greenhouse','lever','ashby','workable','smartrecruiters','workday_json','rss','sitemap','generic_html','playwright','manual'] %}
+      <option value="{{ kind }}" {% if source.fetcher_kind == kind %}selected{% endif %}>{{ kind }}</option>
+      {% endfor %}
+    </select>
+
+    <label>Fetcher config (JSON)</label>
+    <textarea name="fetcher_config" rows="6" class="mono">{{ config_json }}</textarea>
+
+    <label>Priority (1–5)</label>
+    <input type="number" name="priority" min="1" max="5" value="{{ source.priority }}">
+
+    <label>Geography tags (comma-separated)</label>
+    <input type="text" name="geography_tags" value="{{ source.geography_tags | join(', ') }}">
+
+    <label class="checkbox-label">
+      <input type="checkbox" name="enabled" {% if source.enabled %}checked{% endif %}> Enabled
+    </label>
+
+    <button type="submit" class="btn-primary">Save changes</button>
+  </form>
+</div>
+{% endblock %}
