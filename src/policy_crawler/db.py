@@ -1,15 +1,19 @@
 from __future__ import annotations
 
-from collections.abc import Iterator
+import contextlib
+from collections.abc import Callable, Iterator
 from contextlib import contextmanager
 from functools import cache
 from typing import Any, cast
 
 import psycopg
+import structlog
 from psycopg.rows import dict_row
 from psycopg_pool import ConnectionPool
 
 from policy_crawler.config import get_settings
+
+logger = structlog.get_logger(__name__)
 
 
 @cache
@@ -47,6 +51,43 @@ def get_pool() -> ConnectionPool[psycopg.Connection[dict[str, Any]]]:
 def connection() -> Iterator[psycopg.Connection[dict[str, Any]]]:
     with get_pool().connection() as conn:
         yield conn
+
+
+def reset_pool() -> None:
+    """Close and drop the cached pool so the next call opens fresh connections.
+
+    Used to recover from a connection the pool believed was healthy but the
+    server (or an intervening NAT) had silently dropped — the pool's checkout
+    ping can't always detect this, so we force a clean slate on retry.
+    """
+    with contextlib.suppress(Exception):  # best-effort teardown
+        get_pool().close()
+    get_pool.cache_clear()
+
+
+def execute_write(
+    work: Callable[[psycopg.Connection[dict[str, Any]]], None],
+    *,
+    retries: int = 2,
+) -> None:
+    """Run *work(conn)* in a transaction, retrying on a dropped connection.
+
+    The whole unit of work is retried on a guaranteed-fresh connection. Because
+    psycopg's connection context manager rolls the transaction back when *work*
+    raises, a retry re-runs cleanly without partial or duplicated writes — so
+    this is safe for batches that INSERT (e.g. ``llm_calls``), not just
+    idempotent UPDATEs.
+    """
+    for attempt in range(retries + 1):
+        try:
+            with connection() as conn:
+                work(conn)
+            return
+        except psycopg.OperationalError as exc:
+            logger.warning("db.write_retry", attempt=attempt, error=str(exc))
+            reset_pool()
+            if attempt == retries:
+                raise
 
 
 def health_check() -> bool:

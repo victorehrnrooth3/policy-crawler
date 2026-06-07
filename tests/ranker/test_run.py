@@ -14,6 +14,26 @@ from policy_crawler.ranker.pass2 import Pass2Result
 from policy_crawler.ranker.prompts import SYSTEM_PROMPT, format_recent_feedback
 from policy_crawler.ranker.run import MAX_PASS1_PER_RUN, MAX_PASS2_PER_RUN, RankerSummary
 
+
+def _run_write_capture(write_fn: Any, results: list[Any]) -> MagicMock:
+    """Run a _write_*_results fn with execute_write faked, return the mock cursor.
+
+    The write functions now route through db.execute_write(work); we fake that to
+    run `work(conn)` once against a mock connection so tests can inspect the
+    cursor's execute calls.
+    """
+    mock_cur = MagicMock()
+    mock_conn = MagicMock()
+    mock_conn.cursor.return_value.__enter__.return_value = mock_cur
+
+    def fake_execute_write(work: Any, **_kw: Any) -> None:
+        work(mock_conn)
+
+    with patch("policy_crawler.ranker.run.execute_write", fake_execute_write):
+        write_fn(results, run_id=None)
+    return mock_cur
+
+
 # ── format_recent_feedback (no DB, no mocking needed) ─────────────────────────
 
 
@@ -181,14 +201,8 @@ def test_write_pass1_results_skips_total_failures() -> None:
         error="API timeout",
     )
 
-    with patch("policy_crawler.ranker.run.connection") as mock_conn:
-        mock_cur = MagicMock()
-        mock_conn.return_value.__enter__.return_value = MagicMock()
-        mock_conn.return_value.__enter__.return_value.cursor.return_value.__enter__.return_value = (
-            mock_cur
-        )
-        _write_pass1_results([error_result], run_id=None)
-        mock_cur.execute.assert_not_called()
+    mock_cur = _run_write_capture(_write_pass1_results, [error_result])
+    mock_cur.execute.assert_not_called()
 
 
 def test_write_pass1_results_persists_valid_result() -> None:
@@ -196,14 +210,8 @@ def test_write_pass1_results_persists_valid_result() -> None:
     from policy_crawler.ranker.run import _write_pass1_results
 
     valid_result = _make_pass1_result(uuid.uuid4())
-
-    with patch("policy_crawler.ranker.run.connection") as mock_conn:
-        mock_cur = MagicMock()
-        ctx = MagicMock()
-        ctx.cursor.return_value.__enter__.return_value = mock_cur
-        mock_conn.return_value.__enter__.return_value = ctx
-        _write_pass1_results([valid_result], run_id=None)
-        assert mock_cur.execute.call_count == 2  # UPDATE jobs + INSERT llm_calls
+    mock_cur = _run_write_capture(_write_pass1_results, [valid_result])
+    assert mock_cur.execute.call_count == 2  # UPDATE jobs + INSERT llm_calls
 
 
 def test_write_pass2_results_skips_total_failures() -> None:
@@ -223,11 +231,5 @@ def test_write_pass2_results_skips_total_failures() -> None:
         error="API error",
     )
 
-    with patch("policy_crawler.ranker.run.connection") as mock_conn:
-        mock_cur = MagicMock()
-        mock_conn.return_value.__enter__.return_value = MagicMock()
-        mock_conn.return_value.__enter__.return_value.cursor.return_value.__enter__.return_value = (
-            mock_cur
-        )
-        _write_pass2_results([error_result], run_id=None)
-        mock_cur.execute.assert_not_called()
+    mock_cur = _run_write_capture(_write_pass2_results, [error_result])
+    mock_cur.execute.assert_not_called()

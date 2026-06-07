@@ -4,13 +4,14 @@ from __future__ import annotations
 
 import sys
 from dataclasses import dataclass, field
+from typing import Any
 from uuid import UUID
 
 import anthropic
 import structlog
 
 from policy_crawler.config import get_settings
-from policy_crawler.db import connection, get_pool
+from policy_crawler.db import connection, execute_write, get_pool
 from policy_crawler.ranker.pass1 import Pass1Result, screen
 from policy_crawler.ranker.pass2 import Pass2Result, deep_score
 from policy_crawler.ranker.profile import load_profile
@@ -100,63 +101,69 @@ class RankerSummary:
 
 
 def _write_pass1_results(results: list[Pass1Result], run_id: UUID | None) -> None:
-    with connection() as conn, conn.cursor() as cur:
-        for r in results:
-            if r.error and r.fit_score == 0 and not r.screen_reason:
-                continue  # skip total failures
-            cur.execute(
-                _UPDATE_PASS1,
-                (
-                    r.fit_score,
-                    r.screen_reason or None,
-                    r.confidence,
-                    r.dealbreaker_hits,
-                    r.job_id,
-                ),
-            )
-            cur.execute(
-                _INSERT_LLM_CALL,
-                (
-                    run_id,
-                    "pass1",
-                    r.model,
-                    r.input_tokens,
-                    r.output_tokens,
-                    r.cost_usd,
-                    r.error,
-                ),
-            )
+    def work(conn: Any) -> None:
+        with conn.cursor() as cur:
+            for r in results:
+                if r.error and r.fit_score == 0 and not r.screen_reason:
+                    continue  # skip total failures
+                cur.execute(
+                    _UPDATE_PASS1,
+                    (
+                        r.fit_score,
+                        r.screen_reason or None,
+                        r.confidence,
+                        r.dealbreaker_hits,
+                        r.job_id,
+                    ),
+                )
+                cur.execute(
+                    _INSERT_LLM_CALL,
+                    (
+                        run_id,
+                        "pass1",
+                        r.model,
+                        r.input_tokens,
+                        r.output_tokens,
+                        r.cost_usd,
+                        r.error,
+                    ),
+                )
+
+    execute_write(work)
 
 
 def _write_pass2_results(results: list[Pass2Result], run_id: UUID | None) -> None:
-    with connection() as conn, conn.cursor() as cur:
-        for r in results:
-            if r.error and r.fit_score == 0:
-                continue
-            cur.execute(
-                _UPDATE_PASS2,
-                (
-                    r.fit_score,
-                    r.reason_to_consider or None,
-                    r.concerns or None,
-                    r.matched_signals,
-                    r.missing_info,
-                    r.recommended_action,
-                    r.job_id,
-                ),
-            )
-            cur.execute(
-                _INSERT_LLM_CALL,
-                (
-                    run_id,
-                    "pass2",
-                    r.model,
-                    r.input_tokens,
-                    r.output_tokens,
-                    r.cost_usd,
-                    r.error,
-                ),
-            )
+    def work(conn: Any) -> None:
+        with conn.cursor() as cur:
+            for r in results:
+                if r.error and r.fit_score == 0:
+                    continue
+                cur.execute(
+                    _UPDATE_PASS2,
+                    (
+                        r.fit_score,
+                        r.reason_to_consider or None,
+                        r.concerns or None,
+                        r.matched_signals,
+                        r.missing_info,
+                        r.recommended_action,
+                        r.job_id,
+                    ),
+                )
+                cur.execute(
+                    _INSERT_LLM_CALL,
+                    (
+                        run_id,
+                        "pass2",
+                        r.model,
+                        r.input_tokens,
+                        r.output_tokens,
+                        r.cost_usd,
+                        r.error,
+                    ),
+                )
+
+    execute_write(work)
 
 
 # ── Main entry point ─────────────────────────────────────────────────────────────
