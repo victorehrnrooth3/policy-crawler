@@ -1,0 +1,46 @@
+name: Weekly
+
+on:
+  schedule:
+    - cron: "30 7 * * 0"   # Sundays 07:30 UTC
+  workflow_dispatch:
+
+concurrency:
+  group: weekly
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-24.04
+
+    env:
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      NEON_DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+      RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+      DIGEST_FROM_EMAIL: ${{ secrets.DIGEST_FROM_EMAIL }}
+      DIGEST_TO_EMAIL: ${{ secrets.DIGEST_TO_EMAIL }}
+      WEBAPP_BASE_URL: ${{ secrets.WEBAPP_BASE_URL }}
+      TOKEN_HMAC_SECRET: ${{ secrets.TOKEN_HMAC_SECRET }}
+      GH_PAT_FOR_PROFILE_PR: ${{ secrets.GH_PAT_FOR_PROFILE_PR }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: pip-${{ hashFiles('pyproject.toml') }}
+          restore-keys: pip-
+
+      - name: Install
+        run: pip install -e .
+
+      - name: Source discovery
+        run: python -m policy_crawler.run --kind weekly_discovery
+
+      - name: Preference self-update
+        run: python -m policy_crawler.run --kind weekly_self_update --gh-pat "${{ secrets.GH_PAT_FOR_PROFILE_PR }}"

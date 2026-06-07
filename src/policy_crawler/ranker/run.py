@@ -208,7 +208,9 @@ def score_pending(
         cur.execute(_SELECT_RECENT_FEEDBACK)
         recent_votes = cur.fetchall()
 
-    if eligible_jobs:
+    if settings.ranker_degrade_to_haiku_only:
+        logger.info("ranker.pass2.skipped_cost_kill_switch")
+    elif eligible_jobs:
         logger.info("ranker.pass2.start", count=len(eligible_jobs))
         p2_results = deep_score(list(eligible_jobs), profile, client, list(recent_votes), run_id)
         _write_pass2_results(p2_results, run_id)

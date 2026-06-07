@@ -178,8 +178,17 @@ def crawl_all(
     kind: str = "manual",
     only_source_name: str | None = None,
     only_kinds: set[str] | None = None,
+    run_id: UUID | None = None,
 ) -> RunSummary:
+    """Crawl all enabled sources and upsert jobs.
+
+    When *run_id* is provided the caller owns the runs row; this function will
+    not create or close it (used by the top-level orchestrator in run.py).
+    When *run_id* is None (standalone invocation) this function creates and
+    closes its own runs row as before.
+    """
     summary = RunSummary()
+    _owns_run_row = run_id is None
 
     # Build parameterized sources query to avoid any injection risk
     sources_sql = _SELECT_SOURCES_BASE
@@ -193,11 +202,12 @@ def crawl_all(
     sources_sql += " ORDER BY priority DESC, name"
 
     with connection() as conn, conn.cursor() as cur:
-        # Open run row
-        cur.execute(_INSERT_RUN, (kind,))
-        row = cur.fetchone()
-        assert row is not None
-        run_id: UUID = row["id"]
+        if _owns_run_row:
+            cur.execute(_INSERT_RUN, (kind,))
+            row = cur.fetchone()
+            assert row is not None
+            run_id = UUID(str(row["id"]))
+        assert run_id is not None
         summary.run_id = run_id
 
         cur.execute(sources_sql, source_params or None)  # type: ignore[arg-type]
@@ -270,13 +280,13 @@ def crawl_all(
             errors=len([e for e in summary.errors if source_name in e]),
         )
 
-    # Close run row
-    error_text = "\n".join(summary.errors[:200]) if summary.errors else None
-    with connection() as conn, conn.cursor() as cur:
-        cur.execute(
-            _UPDATE_RUN,
-            (summary.status, summary.jobs_seen, summary.jobs_new, error_text, run_id),
-        )
+    if _owns_run_row:
+        error_text = "\n".join(summary.errors[:200]) if summary.errors else None
+        with connection() as conn, conn.cursor() as cur:
+            cur.execute(
+                _UPDATE_RUN,
+                (summary.status, summary.jobs_seen, summary.jobs_new, error_text, run_id),
+            )
 
     logger.info(
         "crawl.done",

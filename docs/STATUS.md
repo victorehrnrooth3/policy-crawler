@@ -2,7 +2,7 @@
 
 Single source of truth for "where are we right now?". Update this file at the end of every meaningful session.
 
-## Snapshot (last updated: 2026-06-06, personal laptop — step 07 complete)
+## Snapshot (last updated: 2026-06-07, personal laptop — step 08 complete)
 
 | Step | State | Branch | Notes |
 |---|---|---|---|
@@ -10,21 +10,26 @@ Single source of truth for "where are we right now?". Update this file at the en
 | 02 — Database | **Done, merged to main** | — | Migration applied. Live DB tests pass. |
 | 03 — Source registry | **Done, merged to main** | — | 117 sources seeded. |
 | 04 — Crawler framework | **Done, merged to main** | — | 591 jobs from Anthropic (Greenhouse) + Palantir (Lever). Idempotent on re-run. Post-audit fixes committed. |
-| 05 — Preference profile & ranker | **Code complete, live scoring confirmed working** | `step-05-ranker` | Live scoring ran successfully. Palantir jobs score low (5–25) and skip — not a real target. Awaiting merge to main. |
-| 06 — Email digest | **Code complete** | `step-06-email-digest` | tokens, compose, template, send, 33 tests passing. Needs Resend API key + verified domain to send real email. |
-| 07 — Vote endpoint & webapp | **Code complete** | `step-07-vote-endpoint-and-webapp` | FastAPI app, all routes, HMAC sessions, CSRF, 35 tests passing. Needs `SESSION_COOKIE_SECRET` + `WEBAPP_BASE_URL` in Vercel env vars. |
-| 08–11 | Not started | — | — |
+| 05 — Preference profile & ranker | **Done, merged to main** | — | Live scoring confirmed working. |
+| 06 — Email digest | **Done, merged to main** | — | tokens, compose, template, send. |
+| 07 — Vote endpoint & webapp | **Done, merged to main** | — | FastAPI app deployed on Vercel. All routes smoke-tested. |
+| 08 — Orchestration | **Code complete** | `step-08-orchestration` | CI/daily/weekly workflows; `run.py` orchestrator; `obs/runs.py` helpers; 7 new tests. Needs GitHub Actions secrets wired up before first scheduled run. |
+| 09–11 | Not started | — | — |
 
-## What's on disk right now (step-06-email-digest branch)
+## What's on disk right now (step-08-orchestration branch)
 
-Everything from Steps 01–04 (merged to main), plus:
+Everything from Steps 01–07 (merged to main), plus:
 
-- `data/profile.yaml` — full preference profile (identity, topics, geography, dealbreakers, exemplars).
-- `src/policy_crawler/ranker/` — profile.py, schemas.py, prompts.py, pass1.py (Haiku), pass2.py (Sonnet), run.py (orchestrator + CLI).
-- `tests/ranker/` — 56 tests, all passing (1 skipped without DB).
-- `src/policy_crawler/digest/` — tokens.py, compose.py, template.py, send.py, __main__.py + Jinja2 templates.
-- `tests/digest/` — 33 tests, all passing (1 skipped without DB).
-- Ruff + pyright clean (0 errors).
+- `.github/workflows/ci.yml` — ruff + pyright + pytest on PR/push-to-main.
+- `.github/workflows/daily.yml` — cron `15 6 * * *`; runs `python -m policy_crawler.run --kind daily`.
+- `.github/workflows/weekly.yml` — cron `30 7 * * 0`; runs discovery + self-update sequentially.
+- `src/policy_crawler/run.py` — top-level orchestrator CLI (dispatches by `--kind`).
+- `src/policy_crawler/obs/runs.py` — `start_run()` / `finish_run()` shared helpers.
+- `src/policy_crawler/config.py` — added `RANKER_DEGRADE_TO_HAIKU_ONLY` kill-switch flag.
+- `src/policy_crawler/crawler/run.py` — `crawl_all()` accepts optional `run_id` param.
+- `src/policy_crawler/ranker/run.py` — pass-2 skipped when `RANKER_DEGRADE_TO_HAIKU_ONLY=true`.
+- `tests/test_run_wrapper.py` — 7 tests; all passing.
+- 176 tests total, 8 skipped (DB-live tests without NEON_DATABASE_URL).
 
 ## Live jobs in DB
 
@@ -57,12 +62,12 @@ python -m policy_crawler.ranker.run --limit 20
 
 ## Next concrete actions (in order)
 
-1. Add `SESSION_COOKIE_SECRET` and `WEBAPP_BASE_URL` to Vercel project env vars (+ all other secrets).
-2. Merge `step-05-ranker` → `step-06-email-digest` → `step-07-vote-endpoint-and-webapp` → `main`.
-3. Vercel will auto-deploy from `main`; visit `WEBAPP_BASE_URL/status` to confirm.
-4. Apply migration: `python migrations/_apply.py` (adds `consumed_tokens` + `profile_versions` tables).
-5. Send a real digest email: `python -m policy_crawler.digest --send` → click vote link → confirm session set.
-6. Start Step 08 — GitHub Actions cron for daily + weekly jobs.
+1. **Wire GitHub Actions secrets** — go to repo Settings → Secrets and variables → Actions and add:
+   `ANTHROPIC_API_KEY`, `NEON_DATABASE_URL`, `RESEND_API_KEY`, `DIGEST_FROM_EMAIL`,
+   `DIGEST_TO_EMAIL`, `WEBAPP_BASE_URL`, `TOKEN_HMAC_SECRET`. Optionally `GH_PAT_FOR_PROFILE_PR`.
+2. Merge `step-08-orchestration` → `main`. CI workflow will run automatically on the PR.
+3. Trigger a manual `workflow_dispatch` of `daily.yml` from the GitHub Actions UI to confirm end-to-end success.
+4. Start Step 09 — Source discovery (weekly job).
 
 ## Conventions reminder
 

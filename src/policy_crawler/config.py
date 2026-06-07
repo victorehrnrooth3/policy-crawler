@@ -37,6 +37,7 @@ class Settings(BaseSettings):
     token_hmac_secret: str | None = Field(default=None, alias="TOKEN_HMAC_SECRET")
     session_cookie_secret: str | None = Field(default=None, alias="SESSION_COOKIE_SECRET")
     gh_pat_for_profile_pr: str | None = Field(default=None, alias="GH_PAT_FOR_PROFILE_PR")
+    ranker_degrade_to_haiku_only: bool = Field(default=False, alias="RANKER_DEGRADE_TO_HAIKU_ONLY")
 
 
 @lru_cache(maxsize=1)
