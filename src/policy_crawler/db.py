@@ -27,7 +27,17 @@ def get_pool() -> ConnectionPool[psycopg.Connection[dict[str, Any]]]:
             max_size=4,
             max_idle=180,  # recycle before Neon's ~5-min server-side idle timeout
             check=ConnectionPool.check_connection,  # validate before handing out
-            kwargs={"row_factory": dict_row},
+            kwargs={
+                "row_factory": dict_row,
+                # TCP keepalives stop Neon's pooler from dropping a connection
+                # that idles while the ranker spends 10+ min on LLM calls between
+                # the SELECT (fetch unscored) and the write-back. Probes start
+                # after 30s idle, repeat every 10s, give up after 5 failures.
+                "keepalives": 1,
+                "keepalives_idle": 30,
+                "keepalives_interval": 10,
+                "keepalives_count": 5,
+            },
             open=True,
         ),
     )
