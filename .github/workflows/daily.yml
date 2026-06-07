@@ -21,6 +21,7 @@ jobs:
       DIGEST_TO_EMAIL: ${{ secrets.DIGEST_TO_EMAIL }}
       WEBAPP_BASE_URL: ${{ secrets.WEBAPP_BASE_URL }}
       TOKEN_HMAC_SECRET: ${{ secrets.TOKEN_HMAC_SECRET }}
+      RANKER_DEGRADE_TO_HAIKU_ONLY: "true"  # remove once backlog of existing jobs is cleared
 
     steps:
       - uses: actions/checkout@v4
