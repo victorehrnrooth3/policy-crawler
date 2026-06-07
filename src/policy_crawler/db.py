@@ -25,6 +25,8 @@ def get_pool() -> ConnectionPool[psycopg.Connection[dict[str, Any]]]:
             settings.neon_database_url,
             min_size=1,
             max_size=4,
+            max_idle=180,  # recycle before Neon's ~5-min server-side idle timeout
+            check=ConnectionPool.check_connection,  # validate before handing out
             kwargs={"row_factory": dict_row},
             open=True,
         ),
