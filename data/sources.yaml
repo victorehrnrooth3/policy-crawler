@@ -614,8 +614,8 @@ sources:
     homepage_url: "https://www.teneo.com"
     careers_url: "https://www.teneo.com/careers/"
     category: geopolitical_risk
-    fetcher_kind: generic_html
-    fetcher_config: {}
+    fetcher_kind: greenhouse
+    fetcher_config: {board: "teneo"}
     geography_tags: [london, nyc]
     priority: 5
     enabled: true
@@ -649,8 +649,8 @@ sources:
     homepage_url: "https://openai.com"
     careers_url: "https://openai.com/careers"
     category: corporate_policy_tech
-    fetcher_kind: generic_html
-    fetcher_config: {}
+    fetcher_kind: ashby
+    fetcher_config: {org: "openai", title_keywords: ["policy", "governance", "affairs", "economist", "public"]}
     geography_tags: [bay_area, dc, london]
     priority: 5
     enabled: true
@@ -763,8 +763,8 @@ sources:
     homepage_url: "https://formenergy.com"
     careers_url: "https://formenergy.com/careers"
     category: corporate_policy_energy
-    fetcher_kind: generic_html
-    fetcher_config: {}
+    fetcher_kind: ashby
+    fetcher_config: {org: "formenergy"}
     geography_tags: [boston]
     priority: 5
     enabled: true
@@ -833,8 +833,8 @@ sources:
     homepage_url: "https://www.oecd.org"
     careers_url: "https://www.oecd.org/careers/"
     category: igo
-    fetcher_kind: generic_html
-    fetcher_config: {}
+    fetcher_kind: smartrecruiters
+    fetcher_config: {company: "OECD"}
     geography_tags: [paris, global]
     priority: 5
     enabled: true
