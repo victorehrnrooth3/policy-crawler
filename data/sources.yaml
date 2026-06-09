@@ -245,8 +245,8 @@ sources:
     homepage_url: "https://www.hrw.org"
     careers_url: "https://www.hrw.org/careers"
     category: think_tank
-    fetcher_kind: generic_html
-    fetcher_config: {}
+    fetcher_kind: greenhouse
+    fetcher_config: {board: "humanrightswatch"}
     geography_tags: [nyc, global]
     priority: 3
     enabled: true
@@ -695,8 +695,8 @@ sources:
     homepage_url: "https://www.anduril.com"
     careers_url: "https://www.anduril.com/careers/"
     category: corporate_policy_defense
-    fetcher_kind: generic_html
-    fetcher_config: {}
+    fetcher_kind: greenhouse
+    fetcher_config: {board: "andurilindustries", title_keywords: ["government", "policy", "public affairs", "national security", "regulatory"]}
     geography_tags: [dc, bay_area]
     priority: 5
     enabled: true

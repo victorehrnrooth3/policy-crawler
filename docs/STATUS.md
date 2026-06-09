@@ -14,7 +14,7 @@ Single source of truth for "where are we right now?". Update this file at the en
 | 06 — Email digest | **Done, merged to main** | — | tokens, compose, template, send. |
 | 07 — Vote endpoint & webapp | **Done, merged to main** | — | FastAPI app deployed on Vercel. All routes smoke-tested. |
 | 08 — Orchestration | **Done, merged to main** | — | CI/daily/weekly workflows; `run.py` orchestrator. Connection-resilience fixes (keepalives + write retry) added after live runs. Daily currently paused by user; `RANKER_DEGRADE_TO_HAIKU_ONLY=true` until backlog clears. |
-| Source config (pre-09) | **In progress** | `step-09-source-config` | ATS detection + Rippling/Workable fetchers; 15 sources configured; **16 sources now fetch (was 2)**. See section below. |
+| Source config (pre-09) | **In progress** | `step-09-source-config` | ATS detection + Rippling/Workable fetchers + direct ATS-API probing; **~22 sources now fetch (was 2)**. iCIMS deferred (WAF). See section below. |
 | 09–11 | Not started | — | — |
 
 ## Source configuration (branch `step-09-source-config`)
@@ -23,10 +23,16 @@ Found that only Anthropic + Palantir were fetching; the other ~97 sources had em
 `fetcher_config`. Built `crawler/detect.py` (ATS signature detection) and ran it across
 all 117 sources. Wired up every source on a **supported** ATS:
 
-- **Now fetching (~16):** Anthropic, Palantir, Google DeepMind (greenhouse); Commonwealth
-  Fusion (lever); Helion, Saronic (ashby); Control Risks (workable); Eurasia Group
-  (rippling — new fetcher); RAND, TBI, Apollo, Equinor, Fed SF/Boston/Chicago (workday,
+- **Now fetching (~22):** Anthropic, Google DeepMind, Teneo, Human Rights Watch, Anduril
+  (greenhouse; Anduril `title_keywords`-filtered 2030→2); Palantir, Commonwealth Fusion
+  (lever); Helion, Saronic, OpenAI, Form Energy (ashby; OpenAI `title_keywords`-filtered
+  720→16); Control Risks (workable); Eurasia Group (rippling — new fetcher); OECD
+  (smartrecruiters); RAND, TBI, Apollo, Equinor, Fed SF/Boston/Chicago (workday,
   some `search_text`-scoped).
+- **Direct ATS-API probing** (httpx, no browser) found boards on career SPAs that static
+  detection missed (OpenAI/OECD/Teneo/Form Energy/HRW/Anduril) — cheaper + more robust
+  than Playwright. Added `fetcher_config.title_keywords` (client-side title filter in
+  `crawl_all`) to scope whole-company boards.
 - **New code:** `crawler/detect.py`, `crawler/rippling.py`, migration `0003` (rippling
   enum), Workable location-dict fix, browser User-Agent, Workday `search_text` filter.
 - **Deferred (documented in YAML notes):**
