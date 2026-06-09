@@ -15,6 +15,7 @@ def _build_registry() -> dict[str, Fetcher]:
     from policy_crawler.crawler.lever import LeverFetcher
     from policy_crawler.crawler.manual import ManualFetcher
     from policy_crawler.crawler.playwright import PlaywrightFetcher
+    from policy_crawler.crawler.rippling import RipplingFetcher
     from policy_crawler.crawler.rss import RSSFetcher
     from policy_crawler.crawler.sitemap import SitemapFetcher
     from policy_crawler.crawler.smartrecruiters import SmartRecruitersFetcher
@@ -28,6 +29,7 @@ def _build_registry() -> dict[str, Fetcher]:
         WorkableFetcher(),
         SmartRecruitersFetcher(),
         WorkdayFetcher(),
+        RipplingFetcher(),
         RSSFetcher(),
         SitemapFetcher(),
         GenericHTMLFetcher(),

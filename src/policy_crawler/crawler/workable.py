@@ -42,6 +42,19 @@ class WorkableFetcher(Fetcher):
                 url=f"https://apply.workable.com/{subdomain}/j/{shortcode}/",
                 title=job.get("title", ""),
                 company=source["name"],
-                location_raw=job.get("location"),
+                location_raw=_format_location(job.get("location")),
                 seen_at=now,
             )
+
+
+def _format_location(loc: object) -> str | None:
+    """Workable's v3 API returns location as a dict ({city, region, country}) or a
+    string depending on the account. Coerce to a single display string."""
+    if loc is None:
+        return None
+    if isinstance(loc, str):
+        return loc or None
+    if isinstance(loc, dict):
+        parts = [loc.get("city"), loc.get("region"), loc.get("country")]
+        return ", ".join(p for p in parts if p) or None
+    return None

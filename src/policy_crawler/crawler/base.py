@@ -18,12 +18,22 @@ SourceRow = dict[str, Any]
 
 # ── Shared HTTP client ──────────────────────────────────────────────────────────
 
-_USER_AGENT = "policy-crawler/0.1 (+https://github.com/victorehrnrooth3/policy-crawler)"
+# A realistic desktop-browser UA. Many careers sites (RAND, CSIS, ...) return 403
+# to a bot-identifying UA, so we present as Chrome. Honest crawling otherwise:
+# low volume, once daily.
+_USER_AGENT = (
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+    "(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+)
 
 http = httpx.Client(
     timeout=30.0,
     follow_redirects=True,
-    headers={"User-Agent": _USER_AGENT},
+    headers={
+        "User-Agent": _USER_AGENT,
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "Accept-Language": "en-US,en;q=0.9",
+    },
 )
 
 

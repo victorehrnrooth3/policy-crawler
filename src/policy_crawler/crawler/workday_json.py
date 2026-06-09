@@ -25,10 +25,19 @@ class WorkdayFetcher(Fetcher):
             logger.warning("workday.no_endpoint", source=source["name"])
             return
 
+        # Large corporate Workday tenants (Microsoft, Goldman, ...) expose thousands of
+        # unrelated roles. A per-source search_text keeps the crawl focused and cheap.
+        search_text = source["fetcher_config"].get("search_text", "")
+
         now = datetime.now(UTC)
         offset = 0
         while True:
-            body = {"appliedFacets": {}, "limit": _LIMIT, "offset": offset, "searchText": ""}
+            body = {
+                "appliedFacets": {},
+                "limit": _LIMIT,
+                "offset": offset,
+                "searchText": search_text,
+            }
             try:
                 response = retry_http(http.post)(endpoint, json=body)
             except Exception as exc:

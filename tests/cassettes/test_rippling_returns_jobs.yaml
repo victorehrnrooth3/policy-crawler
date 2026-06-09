@@ -1,0 +1,150 @@
+interactions:
+- request:
+    body: ''
+    headers:
+      Accept:
+      - text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+      Accept-Encoding:
+      - gzip, deflate
+      Accept-Language:
+      - en-US,en;q=0.9
+      Connection:
+      - keep-alive
+      Host:
+      - api.rippling.com
+      User-Agent:
+      - Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like
+        Gecko) Chrome/124.0.0.0 Safari/537.36
+    method: GET
+    uri: https://api.rippling.com/platform/api/ats/v1/board/eurasia-group/jobs
+  response:
+    body:
+      string: "[{\"uuid\":\"adf902c0-147e-4346-bccb-dfc20e8ed63b\",\"name\":\"Associate
+        Director, Japan\",\"department\":{\"id\":\"Corporates\",\"label\":\"Corporates\"},\"url\":\"https://ats.rippling.com/eurasia-group/jobs/adf902c0-147e-4346-bccb-dfc20e8ed63b\",\"workLocation\":{\"label\":\"Tokyo,
+        Japan\",\"id\":\"Tokyo, Japan\"}},{\"uuid\":\"d577fd84-5065-4c45-9ed0-e66ab0edd66d\",\"name\":\"Associate
+        Director, Office of the President\",\"department\":{\"id\":\"Office of the
+        President\",\"label\":\"Office of the President\"},\"url\":\"https://ats.rippling.com/eurasia-group/jobs/d577fd84-5065-4c45-9ed0-e66ab0edd66d\",\"workLocation\":{\"label\":\"New
+        York, NY\",\"id\":\"New York, NY\"}},{\"uuid\":\"d577fd84-5065-4c45-9ed0-e66ab0edd66d\",\"name\":\"Associate
+        Director, Office of the President\",\"department\":{\"id\":\"Office of the
+        President\",\"label\":\"Office of the President\"},\"url\":\"https://ats.rippling.com/eurasia-group/jobs/d577fd84-5065-4c45-9ed0-e66ab0edd66d\",\"workLocation\":{\"label\":\"New
+        York, NY\",\"id\":\"New York, NY\"}},{\"uuid\":\"47cc0de1-a134-44f1-a42f-5b3872ac2690\",\"name\":\"Associate,
+        Sales Operations\",\"department\":{\"id\":\"Business Services\",\"label\":\"Business
+        Services\"},\"url\":\"https://ats.rippling.com/eurasia-group/jobs/47cc0de1-a134-44f1-a42f-5b3872ac2690\",\"workLocation\":{\"label\":\"S\xE3o
+        Paulo, Brazil\",\"id\":\"S\xE3o Paulo, Brazil\"}},{\"uuid\":\"60754d18-9fdb-4475-b9a0-b85588a21440\",\"name\":\"Director,
+        GCC Growth and Client Engagement\",\"department\":{\"id\":\"Corporates/Global
+        Markets\",\"label\":\"Corporates/Global Markets\"},\"url\":\"https://ats.rippling.com/eurasia-group/jobs/60754d18-9fdb-4475-b9a0-b85588a21440\",\"workLocation\":{\"label\":\"Remote
+        (Dubai, Dubai, AE)\",\"id\":\"Remote (Dubai, Dubai, AE)\"}},{\"uuid\":\"04182fc5-b06d-4314-85da-c85c9dbd61ce\",\"name\":\"Director,
+        Sales Operations\",\"department\":{\"id\":\"Business Services\",\"label\":\"Business
+        Services\"},\"url\":\"https://ats.rippling.com/eurasia-group/jobs/04182fc5-b06d-4314-85da-c85c9dbd61ce\",\"workLocation\":{\"label\":\"Brasilia,
+        Brazil\",\"id\":\"Brasilia, Brazil\"}},{\"uuid\":\"04182fc5-b06d-4314-85da-c85c9dbd61ce\",\"name\":\"Director,
+        Sales Operations\",\"department\":{\"id\":\"Business Services\",\"label\":\"Business
+        Services\"},\"url\":\"https://ats.rippling.com/eurasia-group/jobs/04182fc5-b06d-4314-85da-c85c9dbd61ce\",\"workLocation\":{\"label\":\"S\xE3o
+        Paulo, Brazil\",\"id\":\"S\xE3o Paulo, Brazil\"}},{\"uuid\":\"a30e3eb5-2c2e-4e7f-809d-bceb2d0b235c\",\"name\":\"Executive
+        and Admin Support Specialist\",\"department\":{\"id\":\"Business Services\",\"label\":\"Business
+        Services\"},\"url\":\"https://ats.rippling.com/eurasia-group/jobs/a30e3eb5-2c2e-4e7f-809d-bceb2d0b235c\",\"workLocation\":{\"label\":\"S\xE3o
+        Paulo, Brazil\",\"id\":\"S\xE3o Paulo, Brazil\"}},{\"uuid\":\"8050140d-9b65-43f4-b7ad-975c8ad22b93\",\"name\":\"Executive
+        Assistant to the CEO\",\"department\":{\"id\":\"Executive Management\",\"label\":\"Executive
+        Management\"},\"url\":\"https://ats.rippling.com/eurasia-group/jobs/8050140d-9b65-43f4-b7ad-975c8ad22b93\",\"workLocation\":{\"label\":\"New
+        York, NY\",\"id\":\"New York, NY\"}},{\"uuid\":\"3c039f44-f32e-434a-83e9-f21d642148f7\",\"name\":\"Household
+        and Personal Operations Manager, Office of the President \",\"department\":{\"id\":\"Office
+        of the President\",\"label\":\"Office of the President\"},\"url\":\"https://ats.rippling.com/eurasia-group/jobs/3c039f44-f32e-434a-83e9-f21d642148f7\",\"workLocation\":{\"label\":\"New
+        York, NY\",\"id\":\"New York, NY\"}},{\"uuid\":\"147c445e-7a61-44d3-b5ca-3235ebc7f48a\",\"name\":\"Information
+        Technology Technician- Microsoft Endpoint and Cloud Systems\",\"department\":{\"id\":\"Information
+        Technology\",\"label\":\"Information Technology\"},\"url\":\"https://ats.rippling.com/eurasia-group/jobs/147c445e-7a61-44d3-b5ca-3235ebc7f48a\",\"workLocation\":{\"label\":\"S\xE3o
+        Paulo, Brazil\",\"id\":\"S\xE3o Paulo, Brazil\"}},{\"uuid\":\"6ee88132-d9c8-4715-b2a2-5d704638d627\",\"name\":\"Intern,
+        Business Development\",\"department\":{\"id\":\"Latin America \",\"label\":\"Latin
+        America \"},\"url\":\"https://ats.rippling.com/eurasia-group/jobs/6ee88132-d9c8-4715-b2a2-5d704638d627\",\"workLocation\":{\"label\":\"S\xE3o
+        Paulo, Brazil\",\"id\":\"S\xE3o Paulo, Brazil\"}},{\"uuid\":\"4168c6f2-bcc2-417d-a95d-a1c5e45c097f\",\"name\":\"Senior
+        Analyst, China Economics and Policy\",\"department\":{\"id\":\"Research\",\"label\":\"Research\"},\"url\":\"https://ats.rippling.com/eurasia-group/jobs/4168c6f2-bcc2-417d-a95d-a1c5e45c097f\",\"workLocation\":{\"label\":\"Singapore,
+        Singapore\",\"id\":\"Singapore, Singapore\"}},{\"uuid\":\"26ffcff9-f848-4922-b61c-b86e5acfd201\",\"name\":\"Senior
+        Analyst, Turkey\",\"department\":{\"id\":\"Research\",\"label\":\"Research\"},\"url\":\"https://ats.rippling.com/eurasia-group/jobs/26ffcff9-f848-4922-b61c-b86e5acfd201\",\"workLocation\":{\"label\":\"London,
+        United Kingdom\",\"id\":\"London, United Kingdom\"}},{\"uuid\":\"04c48421-c6b3-4e71-ad62-f153620bc675\",\"name\":\"Social
+        Media Manager, Office of the President\",\"department\":{\"id\":\"Office of
+        the President\",\"label\":\"Office of the President\"},\"url\":\"https://ats.rippling.com/eurasia-group/jobs/04c48421-c6b3-4e71-ad62-f153620bc675\",\"workLocation\":{\"label\":\"New
+        York, NY\",\"id\":\"New York, NY\"}},{\"uuid\":\"6a21dd32-8484-4d36-892b-b9590fc25138\",\"name\":\"Strategy
+        and Operations Coordinator, OOM\",\"department\":{\"id\":\"Executive Management\",\"label\":\"Executive
+        Management\"},\"url\":\"https://ats.rippling.com/eurasia-group/jobs/6a21dd32-8484-4d36-892b-b9590fc25138\",\"workLocation\":{\"label\":\"S\xE3o
+        Paulo, Brazil\",\"id\":\"S\xE3o Paulo, Brazil\"}},{\"uuid\":\"b03b8cec-7bf1-4e2a-96aa-1c25303d276d\",\"name\":\"Research
+        Brazil, Intern\",\"department\":{\"id\":\"Research\",\"label\":\"Research\"},\"url\":\"https://ats.rippling.com/eurasia-group/jobs/b03b8cec-7bf1-4e2a-96aa-1c25303d276d\",\"workLocation\":{\"label\":\"Brasilia,
+        Brazil\",\"id\":\"Brasilia, Brazil\"}}]"
+    headers:
+      Allow:
+      - GET, OPTIONS
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-Ray:
+      - a0930865ec5841ae-ARN
+      Cache-Control:
+      - no-store, no-cache, max-age=0, must-revalidate, private
+      Connection:
+      - keep-alive
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 09 Jun 2026 20:54:40 GMT
+      Nel:
+      - '{"report_to":"cf-nel","success_fraction":1.0,"max_age":604800}'
+      Report-To:
+      - '{"group":"cf-nel","max_age":604800,"endpoints":[{"url":"https://a.nel.cloudflare.com/report/v4?s=mUHh7tbMukTXTra%2FZOfFXwQHBIh6Uk4M1RLKWFLR3rpqWoS5g1UTe67J4vBO%2Ft0%2FnUfdvNJMfZ2KC9%2FSI%2FlMXwg%2BvTs5ztlz%2FWdM%2BewA0XKcQlNy%2FC0f398he9b9R4F0Q6U%3D"}]}'
+      Server:
+      - cloudflare
+      Server-Timing:
+      - cfCacheStatus;desc="DYNAMIC"
+      - cfEdge;dur=4,cfOrigin;dur=0,cfWorker;dur=260
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains; preload
+      Transfer-Encoding:
+      - chunked
+      Vary:
+      - Accept-Encoding,Authorization, origin, Cookie
+      access-control-allow-credentials:
+      - 'true'
+      access-control-allow-headers:
+      - Origin, Authorization, Accept
+      alt-svc:
+      - h3=":443"; ma=86400
+      content-length:
+      - '5476'
+      content-security-policy-report-only:
+      - 'script-src ''self'' ''unsafe-inline'' ''unsafe-eval'' https://*.googleapis.com
+        https://*.gstatic.com *.google.com https://*.ggpht.com *.googleusercontent.com
+        https://* data: blob: https://challenges.cloudflare.com; img-src ''self''
+        https://*.googleapis.com https://*.gstatic.com *.google.com *.googleusercontent.com
+        https://* blob: data:; frame-src ''self'' *.google.com https://* data: blob:
+        https://challenges.cloudflare.com; connect-src ''self'' * https://*.googleapis.com
+        *.google.com https://*.gstatic.com wss://* https://* data: blob:; font-src
+        ''self'' https://fonts.gstatic.com https://* data: blob:; style-src ''self''
+        ''unsafe-inline'' https://fonts.googleapis.com https://* data: blob:; worker-src
+        ''self'' https://* data: blob:; report-to browser-intake-datadoghq; frame-ancestors
+        ''self'''
+      cross-origin-opener-policy:
+      - same-origin
+      referrer-policy:
+      - same-origin
+      - origin-when-cross-origin
+      set-cookie:
+      - __cf_bm=gEpa79k3ckou3TToth.ejZN3FAbAYQCXTK6AH4174T0-1781038480.3087995-1.0.1.1-L8gCy6YsPVMrLAMPQFwADW0M9KPGaQekItTuH8skIP0FJC8swK3XOYkchgW_G4AxXWwUIndu56IGOVF2ElWKaM87OjKuo2tFD4Fi1a2b9iYa5hVxd__iZd6fEJW7h_Hr;
+        HttpOnly; SameSite=None; Secure; Path=/; Domain=rippling.com; Expires=Tue,
+        09 Jun 2026 21:24:40 GMT
+      timing-allow-origin:
+      - '*'
+      x-content-type-options:
+      - nosniff
+      - nosniff
+      x-envoy-upstream-service-time:
+      - '54'
+      x-frame-options:
+      - DENY
+      - DENY
+      x-req-queue-duration-ms:
+      - '4'
+      x-req-real-processing-time-ms:
+      - '48'
+      x-rippling-request-id:
+      - Root=1-6a287d90-20d05e471e3ab34640c395db
+      x-xss-protection:
+      - 1; mode=block
+    status:
+      code: 200
+      message: OK
+version: 1

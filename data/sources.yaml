@@ -19,7 +19,7 @@ sources:
     geography_tags: [dc, global]
     priority: 5
     enabled: true
-    notes: "Domestic & economic policy, foreign policy, energy."
+    notes: "Domestic & economic policy, foreign policy, energy. Deferred: careers on iCIMS behind AWS WAF JS challenge (needs Playwright)."
 
   - name: "Carnegie Endowment for International Peace"
     homepage_url: "https://carnegieendowment.org"
@@ -146,8 +146,8 @@ sources:
     homepage_url: "https://www.rand.org"
     careers_url: "https://www.rand.org/jobs.html"
     category: think_tank
-    fetcher_kind: generic_html
-    fetcher_config: {}
+    fetcher_kind: workday_json
+    fetcher_config: {endpoint: "https://rand.wd5.myworkdayjobs.com/wday/cxs/rand/External_Career_Site/jobs"}
     geography_tags: [dc, global]
     priority: 5
     enabled: true
@@ -384,7 +384,7 @@ sources:
     geography_tags: [dc]
     priority: 5
     enabled: true
-    notes: "Most rigorous US energy/environment policy shop."
+    notes: "Most rigorous US energy/environment policy shop. Deferred: careers on SaaSHR (UKG Ready) — no supported fetcher yet."
 
   - name: "Center on Global Energy Policy at Columbia (CGEP)"
     homepage_url: "https://www.energypolicy.columbia.edu"
@@ -445,8 +445,8 @@ sources:
     homepage_url: "https://institute.global"
     careers_url: "https://institute.global/careers"
     category: think_tank
-    fetcher_kind: generic_html
-    fetcher_config: {}
+    fetcher_kind: workday_json
+    fetcher_config: {endpoint: "https://tbinstitute.wd3.myworkdayjobs.com/wday/cxs/tbinstitute/TBI/jobs"}
     geography_tags: [london, global]
     priority: 5
     enabled: true
@@ -535,8 +535,8 @@ sources:
     homepage_url: "https://www.apollo.com"
     careers_url: "https://www.apollo.com/careers"
     category: asset_manager_policy_institute
-    fetcher_kind: generic_html
-    fetcher_config: {}
+    fetcher_kind: workday_json
+    fetcher_config: {endpoint: "https://athene.wd5.myworkdayjobs.com/wday/cxs/athene/Apollo_Careers/jobs", search_text: "research"}
     geography_tags: [nyc]
     priority: 5
     enabled: true
@@ -570,8 +570,8 @@ sources:
     homepage_url: "https://www.eurasiagroup.net"
     careers_url: "https://www.eurasiagroup.net/careers"
     category: geopolitical_risk
-    fetcher_kind: generic_html
-    fetcher_config: {}
+    fetcher_kind: rippling
+    fetcher_config: {org: "eurasia-group"}
     geography_tags: [nyc, dc, london, global]
     priority: 5
     enabled: true
@@ -603,8 +603,8 @@ sources:
     homepage_url: "https://www.controlrisks.com"
     careers_url: "https://www.controlrisks.com/careers"
     category: geopolitical_risk
-    fetcher_kind: generic_html
-    fetcher_config: {}
+    fetcher_kind: workable
+    fetcher_config: {subdomain: "control-risks-6"}
     geography_tags: [london, global]
     priority: 5
     enabled: true
@@ -660,8 +660,8 @@ sources:
     homepage_url: "https://deepmind.google"
     careers_url: "https://deepmind.google/careers/"
     category: corporate_policy_tech
-    fetcher_kind: generic_html
-    fetcher_config: {}
+    fetcher_kind: greenhouse
+    fetcher_config: {board: "deepmind"}
     geography_tags: [london, bay_area]
     priority: 5
     enabled: true
@@ -726,14 +726,14 @@ sources:
 
   - name: "Saronic Technologies — Strategy"
     homepage_url: "https://www.saronic.com"
-    careers_url: "https://www.saronic.com/careers"
+    careers_url: "https://jobs.ashbyhq.com/saronic"
     category: corporate_policy_defense
-    fetcher_kind: generic_html
-    fetcher_config: {}
+    fetcher_kind: ashby
+    fetcher_config: {org: "saronic"}
     geography_tags: [dc]
     priority: 5
-    enabled: false
-    notes: "URL returned 404 at seed time; very new company — check saronic.com for careers."
+    enabled: true
+    notes: "Ashby board (detected step-09). Defense-tech; ranker filters non-policy roles."
 
   - name: "Lockheed Martin — Strategy"
     homepage_url: "https://www.lockheedmartin.com"
@@ -774,8 +774,8 @@ sources:
     homepage_url: "https://cfs.energy"
     careers_url: "https://cfs.energy/careers"
     category: corporate_policy_energy
-    fetcher_kind: generic_html
-    fetcher_config: {}
+    fetcher_kind: lever
+    fetcher_config: {company: "cfsenergy"}
     geography_tags: [boston]
     priority: 5
     enabled: true
@@ -785,8 +785,8 @@ sources:
     homepage_url: "https://www.helionenergy.com"
     careers_url: "https://www.helionenergy.com/careers/"
     category: corporate_policy_energy
-    fetcher_kind: generic_html
-    fetcher_config: {}
+    fetcher_kind: ashby
+    fetcher_config: {org: "helion"}
     geography_tags: [remote]
     priority: 5
     enabled: true
@@ -797,7 +797,7 @@ sources:
     careers_url: "https://www.equinor.com/careers"
     category: corporate_policy_energy
     fetcher_kind: workday_json
-    fetcher_config: {}
+    fetcher_config: {endpoint: "https://equinor.wd3.myworkdayjobs.com/wday/cxs/equinor/EQNR/jobs", search_text: "strategy"}
     geography_tags: [london, global]
     priority: 5
     enabled: true
@@ -823,7 +823,9 @@ sources:
     geography_tags: [london]
     priority: 5
     enabled: true
-    notes: "Energy transition and strategy. London HQ."
+    notes: "Energy transition and strategy. London HQ. Workday endpoint known
+      (bpinternational.wd3.myworkdayjobs.com/.../bpCareers) but 'strategy' filter
+      returns 300+ mostly-procurement roles — needs a tighter search_text before enabling."
 
   # ── IGOs / YPP-style ────────────────────────────────────────────────────────
 
@@ -943,8 +945,8 @@ sources:
     homepage_url: "https://www.frbsf.org"
     careers_url: "https://www.frbsf.org/careers/"
     category: government
-    fetcher_kind: generic_html
-    fetcher_config: {}
+    fetcher_kind: workday_json
+    fetcher_config: {endpoint: "https://rb.wd5.myworkdayjobs.com/wday/cxs/rb/FRS/jobs", search_text: "San Francisco"}
     geography_tags: [bay_area]
     priority: 4
     enabled: true
@@ -954,8 +956,8 @@ sources:
     homepage_url: "https://www.bostonfed.org"
     careers_url: "https://www.bostonfed.org/careers"
     category: government
-    fetcher_kind: generic_html
-    fetcher_config: {}
+    fetcher_kind: workday_json
+    fetcher_config: {endpoint: "https://rb.wd5.myworkdayjobs.com/wday/cxs/rb/FRS/jobs", search_text: "Boston"}
     geography_tags: [boston]
     priority: 4
     enabled: true
@@ -965,8 +967,8 @@ sources:
     homepage_url: "https://www.chicagofed.org"
     careers_url: "https://www.chicagofed.org/careers"
     category: government
-    fetcher_kind: generic_html
-    fetcher_config: {}
+    fetcher_kind: workday_json
+    fetcher_config: {endpoint: "https://rb.wd5.myworkdayjobs.com/wday/cxs/rb/FRS/jobs", search_text: "Chicago"}
     geography_tags: [global]
     priority: 4
     enabled: true
@@ -1027,7 +1029,7 @@ sources:
     geography_tags: [dc]
     priority: 5
     enabled: true
-    notes: "Most rigorous US energy/environment policy RA program. Explicit PhD pipeline."
+    notes: "Most rigorous US energy/environment policy RA program. Explicit PhD pipeline. Deferred: SaaSHR (UKG Ready) — no supported fetcher yet."
 
   - name: "Brookings Research Assistant Program"
     homepage_url: "https://www.brookings.edu"
@@ -1038,7 +1040,7 @@ sources:
     geography_tags: [dc]
     priority: 5
     enabled: true
-    notes: "Research assistant roles at Brookings. Pre-PhD credential building."
+    notes: "Research assistant roles at Brookings. Pre-PhD credential building. Deferred: iCIMS behind AWS WAF (needs Playwright)."
 
   - name: "CSET Research Analyst"
     homepage_url: "https://cset.georgetown.edu"

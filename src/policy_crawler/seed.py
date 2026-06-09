@@ -37,6 +37,7 @@ _VALID_FETCHER_KINDS = {
     "workable",
     "smartrecruiters",
     "workday_json",
+    "rippling",
     "rss",
     "sitemap",
     "generic_html",
