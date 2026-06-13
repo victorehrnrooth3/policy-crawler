@@ -13,7 +13,7 @@ Locked technology choices. Each step file references this rather than re-decidin
 | Tests | **`pytest`** + **`pytest-vcr`** for HTTP fixtures | Standard. VCR cassettes keep fetcher tests deterministic. |
 | HTTP client | **`httpx`** (sync, with retries) | Modern requests-replacement, ergonomic. |
 | HTML parsing | **`selectolax`** (lexbor backend) | Much faster than BeautifulSoup; CSS-selector ergonomics. |
-| Browser automation | **`playwright`** for the small Tier-5 fallback set | Only invoked for sources that genuinely need it. |
+| Browser automation | **`camoufox`** (patched Firefox) for the Tier-3 long-tail fetcher | Replaces Playwright; different TLS fingerprint bypasses iCIMS AWS WAF. Lazy-imported so CI/dev installs don't require the browser binary. Install with `pip install -e ".[camoufox]" && python -m camoufox fetch`. |
 | Data validation | **`pydantic` v2** | Job/Source models, ranker structured output. |
 | LLM SDK | **`anthropic`** (official Python SDK) | Tool-use for structured output; cheap on Haiku, capable on Sonnet. |
 | Database | **Neon Postgres** (free tier, scale-to-zero) | Postgres without server overhead. Free tier: 100 CU-hours / project, 0.5 GB / project. |
@@ -22,7 +22,7 @@ Locked technology choices. Each step file references this rather than re-decidin
 | Email | **Resend** (free tier: 100 emails/day, 3 000 / month) | Best DX for transactional email; free tier comfortably covers a daily digest. |
 | Web framework | **FastAPI** + **Jinja2** templates | Tiny app; FastAPI integrates cleanly with the Vercel Python runtime. |
 | Web hosting | **Vercel hobby tier** (free), Python serverless runtime | Free, low-cold-start, fits "tiny FastAPI app + a couple of pages." |
-| Scheduler | **GitHub Actions cron** | Free for public repos; generous free minutes for private. Daily + weekly schedules. |
+| Scheduler | **GitHub Actions cron** | Free for public repos; generous free minutes for private. **Single weekly schedule** (Sunday 07:30 UTC). No daily cron. |
 | Secrets in CI | **GitHub Actions secrets** | Standard. |
 | Secrets in webapp | **Vercel project env vars** | Encrypted at rest, scoped to project. |
 | Local dev secrets | **`.env`** loaded via `python-dotenv`; **never committed** | `.env.example` in the repo as a template. |

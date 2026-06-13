@@ -5,9 +5,9 @@ runs row for the whole execution, and sends a failure-alert email if the run
 throws an unhandled exception.
 
 ``weekly`` is the unified production pipeline (crawl all tiers + rank + digest +
-source discovery + self-update). The standalone ``daily`` /
+source discovery + preference self-update). The standalone ``daily`` /
 ``weekly_discovery`` / ``weekly_self_update`` kinds remain for ad-hoc
-``workflow_dispatch`` and CLI use. Step 10 (self-update) is still a stub.
+``workflow_dispatch`` and CLI use.
 
 Usage::
 
@@ -77,15 +77,18 @@ def _run_weekly(run_id: UUID, gh_pat: str | None = None) -> _PipelineSummary:
     rank_summary = score_pending(run_id=run_id)
     send_digest()
     disc_summary = _run_weekly_discovery(run_id)
-    _run_weekly_self_update(run_id, gh_pat=gh_pat)
+    su_summary = _run_weekly_self_update(run_id, gh_pat=gh_pat)
 
     return _PipelineSummary(
         jobs_seen=crawl_summary.jobs_seen,
         jobs_new=crawl_summary.jobs_new,
         llm_calls_count=rank_summary.pass1_scored
         + rank_summary.pass2_scored
-        + disc_summary.llm_calls_count,
-        total_cost_usd=rank_summary.total_cost_usd + disc_summary.total_cost_usd,
+        + disc_summary.llm_calls_count
+        + su_summary.llm_calls_count,
+        total_cost_usd=rank_summary.total_cost_usd
+        + disc_summary.total_cost_usd
+        + su_summary.total_cost_usd,
     )
 
 
@@ -100,8 +103,16 @@ def _run_weekly_discovery(run_id: UUID) -> _PipelineSummary:
 
 
 def _run_weekly_self_update(run_id: UUID, gh_pat: str | None = None) -> _PipelineSummary:
-    logger.info("run.weekly_self_update.not_implemented", run_id=str(run_id))
-    return _PipelineSummary()
+    # gh_pat is unused at proposal time — it is only needed when the user approves
+    # the change in the webapp (apply_proposed opens the PR then). Accepted here so
+    # the weekly CLI signature is uniform.
+    from policy_crawler.self_update.run import run_self_update
+
+    summary = run_self_update(run_id=run_id)
+    return _PipelineSummary(
+        llm_calls_count=1 if (summary.ops_proposed or summary.errors) else 0,
+        total_cost_usd=summary.cost_usd,
+    )
 
 
 # ── Failure alert ─────────────────────────────────────────────────────────────

@@ -6,7 +6,7 @@ Durable, mid-level reference for how the system is shaped. Step files cite this 
 
 ```mermaid
 flowchart LR
-    cron["GitHub Actions<br/>daily cron"] --> crawler["Crawler<br/>tiered fetchers"]
+    cron["GitHub Actions<br/>weekly cron"] --> crawler["Crawler<br/>tiered fetchers"]
     crawler --> normalize["Normalize<br/>+ Dedupe"]
     normalize --> db[("Neon<br/>Postgres")]
     db --> ranker["Ranker<br/>Haiku then Sonnet"]
@@ -17,13 +17,13 @@ flowchart LR
     voteApi --> db
     userInbox -->|deeper review| webapp["Vercel FastAPI<br/>inbox / sources / profile"]
     webapp --> db
-    weeklyCron["GitHub Actions<br/>weekly cron"] --> discover["Source<br/>discovery"]
-    weeklyCron --> selfUpdate["Preference<br/>self-update"]
+    cron --> discover["Source<br/>discovery"]
+    cron --> selfUpdate["Preference<br/>self-update"]
     discover --> db
     selfUpdate --> db
 ```
 
-Two scheduled jobs (daily and weekly), one ambient web service for vote handling and review, one Postgres database, one LLM provider. That's the whole system.
+One weekly scheduled job (Sunday 07:30 UTC), one ambient web service for vote handling and review, one Postgres database, one LLM provider. That's the whole system.
 
 ## Components
 
@@ -77,7 +77,7 @@ Schema is in `migrations/`. Conceptual sketch (column lists are illustrative, no
 The list of employers / careers pages to monitor.
 - `id`, `name`, `careers_url`, `homepage_url`
 - `category` (enum: `think_tank`, `asset_manager_policy_institute`, `geopolitical_risk`, `corporate_policy_tech`, `corporate_policy_defense`, `corporate_policy_energy`, `igo`, `government`, `predoc_program`, `phd_program`, `fellowship`)
-- `fetcher_kind` (enum: `greenhouse`, `lever`, `ashby`, `workable`, `smartrecruiters`, `workday_json`, `rss`, `sitemap`, `generic_html`, `playwright`, `manual`)
+- `fetcher_kind` (enum: `greenhouse`, `lever`, `ashby`, `workable`, `smartrecruiters`, `rippling`, `workday_json`, `camoufox`, `generic_html`, `manual`; note `rss`/`sitemap`/`playwright` remain as DB enum values but have no enabled sources and no registered fetcher)
 - `fetcher_config` (jsonb — board token, base URL, selectors, etc.)
 - `geography_tags` (text[]: `london`, `nyc`, `bay_area`, `boston`, `dc`, `paris`, `brussels`, `geneva`, `global`, `remote`)
 - `priority` (int 1–5; affects ranker pass-2 inclusion)
@@ -107,27 +107,27 @@ Append-only history. One row per crawl that observed a meaningful change in titl
 - `id`, `diff` (jsonb), `rationale_per_change` (jsonb), `status` (`pending`/`applied`/`rejected`), `proposed_at`, `applied_at`
 
 ### `runs`
-One row per scheduled job execution: kind (`daily`/`weekly_discovery`/`weekly_self_update`), started_at, finished_at, status, jobs_seen, jobs_new, llm_calls_count, total_cost_usd, error.
+One row per scheduled job execution: kind (`weekly`/`daily`/`weekly_discovery`/`weekly_self_update`), started_at, finished_at, status, jobs_seen, jobs_new, llm_calls_count, total_cost_usd, error.
 
 ### `llm_calls`
-Per-call audit: model, input_tokens, output_tokens, cost_usd, run_id, kind (`pass1`/`pass2`/`discovery`/`self_update`), latency_ms.
+Per-call audit: model, input_tokens, output_tokens, cost_usd, run_id, kind (`pass1`/`pass2`/`discovery`/`self_update`/`crawl_extract`), latency_ms.
 
 ## Fetcher tiers
 
-The crawler picks a fetcher per source row by `fetcher_kind`. New fetchers are added by implementing the abstract interface and registering. Tier order reflects "use the most reliable approach available" — never use Playwright if a JSON API works.
+The crawler picks a fetcher per source row by `fetcher_kind`. New fetchers are added by implementing the abstract interface and registering. Tier order reflects "use the most reliable approach available."
 
 | Tier | Kind | Notes |
 |---|---|---|
-| 1 | `greenhouse` | Public Job Board API: `https://boards-api.greenhouse.io/v1/boards/{board}/jobs`. Many tech and frontier-tech employers (Anthropic, OpenAI, Anduril) use this. |
+| 1 | `greenhouse` | Public Job Board API: `https://boards-api.greenhouse.io/v1/boards/{board}/jobs`. Many tech and frontier-tech employers. |
 | 1 | `lever` | Public Postings API: `https://api.lever.co/v0/postings/{company}?mode=json`. |
 | 1 | `ashby` | Public job board API: `https://api.ashbyhq.com/posting-api/job-board/{org}`. Some defense/tech startups. |
-| 1 | `workable` | Public API where exposed; otherwise treat as `generic_html`. |
+| 1 | `workable` | Public API where exposed. |
 | 1 | `smartrecruiters` | Public API: `https://api.smartrecruiters.com/v1/companies/{company}/postings`. |
-| 2 | `workday_json` | Best-effort. Workday tenants expose `/wday/cxs/{tenant}/{site}/jobs` JSON endpoints; URL pattern detectable from the careers URL. Many think tanks, banks, asset managers run Workday. Fragile but worth trying. |
-| 3 | `rss` / `sitemap` | Some research orgs (Brookings, RFF, RAND for some content) publish RSS feeds or careers sitemaps. |
-| 4 | `generic_html` | `httpx` + `selectolax` to parse a configured CSS selector. Per-source `fetcher_config.selectors` block. |
-| 5 | `playwright` | Last resort for JS-rendered pages with no API and no static HTML signal. Used sparingly because it's slow and fragile in CI. |
-| 6 | `manual` | Source flagged as un-automatable. Webapp has a "paste a job listing URL" form that triggers a one-shot LLM extract into the `jobs` table. |
+| 1 | `rippling` | Public postings endpoint for Rippling-hosted orgs (`app.rippling.com/api/o/{id}/ats/jobs`). |
+| 2 | `workday_json` | Best-effort. Workday tenants expose `/wday/cxs/{tenant}/{site}/jobs` JSON endpoints; URL pattern detectable from the careers URL. Many think tanks, IGOs, and asset managers run Workday. Fragile but worth trying before browser fallback. |
+| 3 | `camoufox` | **Default long-tail strategy.** Camoufox (patched Firefox) renders the careers page — its TLS fingerprint bypasses the iCIMS AWS WAF that blocks headless Chromium. Walks all `page.frames` generically so iCIMS `#icims_content_iframe` is covered with no site-specific code. Extracts roles with a forced Haiku `extract_jobs` tool call (~$0.0085/page). Logs a `crawl_extract` row to `llm_calls`. |
+| 4 | `generic_html` | Retained in DB enum only; 0 enabled sources. All previously-configured `generic_html` sources migrated to `camoufox`. Per-source CSS selectors were never populated, so this tier produced 0 jobs before migration. |
+| 5 | `manual` | Source flagged as un-automatable. Webapp has a "paste a job listing URL" form that triggers a one-shot LLM extract into the `jobs` table. |
 
 The fetcher interface returns a list of `RawJob` records (typed). Normalization happens in a dedicated layer downstream, so fetchers can stay narrow.
 
@@ -137,11 +137,14 @@ The fetcher interface returns a list of `RawJob` records (typed). Normalization 
 
 A single Sonnet pass on every crawled job would be expensive. A single Haiku pass would miss nuance on borderline cases. The two-pass split puts every job through cheap screening, and reserves the more capable model for jobs where my decision actually depends on careful reasoning.
 
-Rough budget (200 active sources, ~10 new jobs/day):
-- Pass 1: 10 jobs × ~2k input + ~200 output tokens × Haiku = ~ $0.025/day = ~$0.75/month
-- Pass 2: ~3 jobs × ~3k input + ~600 output tokens × Sonnet = ~$0.04/day = ~$1.20/month
+Rough budget (78 active sources, weekly cadence, ~70 new jobs/week):
+- Camoufox crawl: ~50 pages/week × ~$0.0085 = ~$1.85/month
+- Pass 1: ~70 jobs × ~$0.003 avg = ~$0.85/month
+- Pass 2: ~20 jobs (fit ≥ 60 from pass 1) × ~$0.015 avg = ~$1.30/month
+- Source discovery: 1 Sonnet call/week ≈ $0.20/month
+- **Total: ~$4.20/month** — under the $5/month target.
 
-Comfortably under the $5/month target with headroom for source discovery and self-update calls.
+Note: `crawl_extract` costs (Camoufox/Haiku) are tracked in `llm_calls` rows but not currently included in `runs.total_cost_usd`. Step 11 will aggregate them.
 
 ### Structured output
 
@@ -169,7 +172,16 @@ The ranker is taught (via prompt) that posting type changes the reasoning: a fel
 Documented here so future agents don't re-introduce them by reflex:
 
 - **No Streamlit Community Cloud.** Public-by-default; my CV and feedback data are personal. Replaced with a private Vercel-hosted FastAPI app gated by signed-token sessions.
-- **No "ATS APIs are enough" assumption.** Many of my highest-value sources (think tanks, RAND, Brookings, RFF, asset managers, IGOs) don't use Greenhouse/Lever/Ashby. The fetcher tier system is built to handle Workday, iCIMS, RSS, generic HTML, Playwright, and manual entry.
+- **No "ATS APIs are enough" assumption.** Many of my highest-value sources (think tanks, RAND, Brookings, RFF, asset managers, IGOs) don't use Greenhouse/Lever/Ashby. The fetcher tier system is built to handle Workday, iCIMS, and the browser-render long tail.
 - **No autonomous source addition.** The system never adds a source on its own. Discovery is a *suggestion engine* and approval is mine.
 - **No fully-autonomous profile drift.** Self-update produces a diff for me to approve. The exemplar few-shot in prompts handles same-day feedback propagation; profile-level edits are weekly + reviewed.
 - **No browsing agent.** The LLM never makes HTTP requests itself. All fetching is plain Python; the LLM only sees text we give it.
+
+## Departures from the original step specs (as-built)
+
+Documented here so future agents understand the delta between the step docs and what's on disk:
+
+- **Camoufox Tier-2 fetcher** was not in any original spec. It emerged when the iCIMS AWS WAF blocked Playwright; Camoufox (patched Firefox) bypasses it. It became the single long-tail strategy replacing `playwright`, `rss`, `sitemap`, and `generic_html`. Those three fetcher modules have been deleted; only the DB enum values remain.
+- **Rippling Tier-1 fetcher** was added to support Eurasia Group (the only Rippling-hosted source); not in original spec.
+- **Daily schedule eliminated.** The original Step 08 spec described `daily.yml` (crawl+rank+digest) and `weekly.yml` (discovery + self-update as two separate invocations). In practice `daily.yml` was deleted and everything runs as a single `--kind weekly` invocation on Sundays. The `daily`, `weekly_discovery`, and `weekly_self_update` kinds remain for ad-hoc CLI use.
+- **Step 09 implemented as a single module** (`discovery/run.py`) rather than the spec's three-module design (`summarize_likes.py` + `propose_sources.py` + `validate.py`). Functionally equivalent; some minor spec features (confidence badge, 60-day auto-snooze, aggregator-URL rejection) are deferred to followups in the Step 09 doc.

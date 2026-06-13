@@ -168,6 +168,16 @@ def _mock_discovery_summary(cost: float = 0.02) -> MagicMock:
     return m
 
 
+def _mock_self_update_summary(cost: float = 0.01) -> MagicMock:
+    m = MagicMock()
+    m.feedback_total = 4
+    m.ops_proposed = 2
+    m.change_id = str(uuid4())
+    m.cost_usd = cost
+    m.errors = []
+    return m
+
+
 def test_weekly_discovery_opens_and_closes_run_row() -> None:
     run_id = uuid4()
 
@@ -212,13 +222,17 @@ def test_weekly_runs_full_pipeline_in_order() -> None:
             "policy_crawler.discovery.run.run_discovery",
             side_effect=_track("discovery", _mock_discovery_summary()),
         ),
+        patch(
+            "policy_crawler.self_update.run.run_self_update",
+            side_effect=_track("self_update", _mock_self_update_summary()),
+        ),
     ):
         from policy_crawler.run import run
 
         run("weekly")
 
-    # Crawl + rank + digest first; discovery (proposals only) runs last.
-    assert call_order == ["crawl", "rank", "digest", "discovery"]
+    # Crawl + rank + digest first; discovery + self-update (proposals only) run last.
+    assert call_order == ["crawl", "rank", "digest", "discovery", "self_update"]
 
 
 def test_weekly_self_update_opens_and_closes_run_row() -> None:
@@ -227,6 +241,10 @@ def test_weekly_self_update_opens_and_closes_run_row() -> None:
     with (
         patch("policy_crawler.run.start_run", return_value=run_id) as mock_start,
         patch("policy_crawler.run.finish_run") as mock_finish,
+        patch(
+            "policy_crawler.self_update.run.run_self_update",
+            return_value=_mock_self_update_summary(),
+        ),
     ):
         from policy_crawler.run import run
 
