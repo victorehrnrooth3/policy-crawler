@@ -9,14 +9,18 @@ _REGISTRY: dict[str, Fetcher] | None = None
 
 
 def _build_registry() -> dict[str, Fetcher]:
+    # Tier 1 = free ATS JSON APIs. Tier 2 = camoufox (browser render + Haiku
+    # extraction, the long-tail strategy). Retained: generic_html (configured-
+    # selector escape hatch for deferred rows) + manual (webapp-added jobs).
+    # playwright/rss/sitemap were removed — zero configured sources, superseded
+    # by camoufox.
     from policy_crawler.crawler.ashby import AshbyFetcher
+    from policy_crawler.crawler.camoufox_llm import CamoufoxLLMFetcher
     from policy_crawler.crawler.generic_html import GenericHTMLFetcher
     from policy_crawler.crawler.greenhouse import GreenhouseFetcher
     from policy_crawler.crawler.lever import LeverFetcher
     from policy_crawler.crawler.manual import ManualFetcher
-    from policy_crawler.crawler.playwright import PlaywrightFetcher
-    from policy_crawler.crawler.rss import RSSFetcher
-    from policy_crawler.crawler.sitemap import SitemapFetcher
+    from policy_crawler.crawler.rippling import RipplingFetcher
     from policy_crawler.crawler.smartrecruiters import SmartRecruitersFetcher
     from policy_crawler.crawler.workable import WorkableFetcher
     from policy_crawler.crawler.workday_json import WorkdayFetcher
@@ -28,10 +32,9 @@ def _build_registry() -> dict[str, Fetcher]:
         WorkableFetcher(),
         SmartRecruitersFetcher(),
         WorkdayFetcher(),
-        RSSFetcher(),
-        SitemapFetcher(),
+        RipplingFetcher(),
+        CamoufoxLLMFetcher(),
         GenericHTMLFetcher(),
-        PlaywrightFetcher(),
         ManualFetcher(),
     ]
     return {f.kind: f for f in instances}

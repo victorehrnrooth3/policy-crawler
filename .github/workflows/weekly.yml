@@ -36,11 +36,11 @@ jobs:
           key: pip-${{ hashFiles('pyproject.toml') }}
           restore-keys: pip-
 
-      - name: Install
-        run: pip install -e .
+      - name: Install (incl. Camoufox Tier-2 fetcher)
+        run: pip install -e ".[camoufox]"
 
-      - name: Source discovery
-        run: python -m policy_crawler.run --kind weekly_discovery
+      - name: Fetch Camoufox browser
+        run: python -m camoufox fetch
 
-      - name: Preference self-update
-        run: python -m policy_crawler.run --kind weekly_self_update --gh-pat "${{ secrets.GH_PAT_FOR_PROFILE_PR }}"
+      - name: Run weekly pipeline (crawl + rank + digest + discovery + self-update)
+        run: python -m policy_crawler.run --kind weekly --gh-pat "${{ secrets.GH_PAT_FOR_PROFILE_PR }}"

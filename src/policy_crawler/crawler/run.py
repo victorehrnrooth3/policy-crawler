@@ -119,6 +119,16 @@ def _content_hash(text: str | None) -> str:
     return hashlib.md5((text or "").encode()).hexdigest()
 
 
+def _filter_by_title(raw_jobs: list[Any], keywords: list[str]) -> list[Any]:
+    """Keep only RawJobs whose title contains at least one keyword (case-insensitive).
+
+    Used to scope whole-company ATS boards (Ashby/Greenhouse) to relevant roles when
+    the platform offers no server-side search, via fetcher_config.title_keywords.
+    """
+    lowered = [k.lower() for k in keywords]
+    return [j for j in raw_jobs if any(k in (j.title or "").lower() for k in lowered)]
+
+
 def _upsert_job(cur: Any, job: dict[str, Any]) -> tuple[UUID, bool, bool]:
     """Insert or update one job. Returns (job_id, is_new, content_changed)."""
     source_id = job["source_id"]
@@ -230,12 +240,25 @@ def crawl_all(
             log.warning("crawl.unknown_fetcher")
             continue
 
+        # Expose the run id to fetchers that log their own cost (e.g. the
+        # camoufox Tier-2 fetcher writes an llm_calls row per page).
+        source["_run_id"] = run_id
+
         raw_jobs = []
         try:
             raw_jobs = list(fetcher.fetch(source))
         except Exception as exc:
             summary.errors.append(f"{source_name}: {exc}")
             log.warning("crawl.fetch_error", error=str(exc))
+
+        # Optional client-side title filter for ATS feeds with no server-side search
+        # (e.g. Ashby/Greenhouse boards covering a whole company). Keeps a giant board
+        # like OpenAI's 720 roles focused on the handful that match, saving ranker cost.
+        keywords = source["fetcher_config"].get("title_keywords") or []
+        if keywords:
+            before = len(raw_jobs)
+            raw_jobs = _filter_by_title(raw_jobs, keywords)
+            log.info("crawl.title_filtered", kept=len(raw_jobs), dropped=before - len(raw_jobs))
 
         summary.jobs_seen += len(raw_jobs)
 

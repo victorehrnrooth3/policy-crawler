@@ -2,7 +2,7 @@
 
 Single source of truth for "where are we right now?". Update this file at the end of every meaningful session.
 
-## Snapshot (last updated: 2026-06-07, personal laptop — step 08 complete)
+## Snapshot (last updated: 2026-06-09, personal laptop — source configuration in progress)
 
 | Step | State | Branch | Notes |
 |---|---|---|---|
@@ -13,8 +13,43 @@ Single source of truth for "where are we right now?". Update this file at the en
 | 05 — Preference profile & ranker | **Done, merged to main** | — | Live scoring confirmed working. |
 | 06 — Email digest | **Done, merged to main** | — | tokens, compose, template, send. |
 | 07 — Vote endpoint & webapp | **Done, merged to main** | — | FastAPI app deployed on Vercel. All routes smoke-tested. |
-| 08 — Orchestration | **Code complete** | `step-08-orchestration` | CI/daily/weekly workflows; `run.py` orchestrator; `obs/runs.py` helpers; 7 new tests. Needs GitHub Actions secrets wired up before first scheduled run. |
+| 08 — Orchestration | **Done, merged to main** | — | CI/daily/weekly workflows; `run.py` orchestrator. Connection-resilience fixes (keepalives + write retry) added after live runs. Daily currently paused by user; `RANKER_DEGRADE_TO_HAIKU_ONLY=true` until backlog clears. |
+| Source config (pre-09) | **In progress** | `step-09-source-config` | ATS detection + Rippling/Workable fetchers + direct ATS-API probing; **~22 sources now fetch (was 2)**. iCIMS deferred (WAF). See section below. |
 | 09–11 | Not started | — | — |
+
+## Source configuration (branch `step-09-source-config`)
+
+Found that only Anthropic + Palantir were fetching; the other ~97 sources had empty
+`fetcher_config`. Built `crawler/detect.py` (ATS signature detection) and ran it across
+all 117 sources. Wired up every source on a **supported** ATS:
+
+- **Now fetching (~22):** Anthropic, Google DeepMind, Teneo, Human Rights Watch, Anduril
+  (greenhouse; Anduril `title_keywords`-filtered 2030→2); Palantir, Commonwealth Fusion
+  (lever); Helion, Saronic, OpenAI, Form Energy (ashby; OpenAI `title_keywords`-filtered
+  720→16); Control Risks (workable); Eurasia Group (rippling — new fetcher); OECD
+  (smartrecruiters); RAND, TBI, Apollo, Equinor, Fed SF/Boston/Chicago (workday,
+  some `search_text`-scoped).
+- **Direct ATS-API probing** (httpx, no browser) found boards on career SPAs that static
+  detection missed (OpenAI/OECD/Teneo/Form Energy/HRW/Anduril) — cheaper + more robust
+  than Playwright. Added `fetcher_config.title_keywords` (client-side title filter in
+  `crawl_all`) to scope whole-company boards.
+- **New code:** `crawler/detect.py`, `crawler/rippling.py`, migration `0003` (rippling
+  enum), Workable location-dict fix, browser User-Agent, Workday `search_text` filter.
+- **Deferred (documented in YAML notes):**
+  - **iCIMS** (Brookings, Brookings RA, CFR) — behind an AWS WAF JS challenge; needs
+    Playwright. This is now the single biggest unlock (3 priority sources, same platform).
+  - **SaaSHR** (RFF, RFF Predoc) — no supported fetcher.
+  - **BP** — Workday endpoint known but `strategy` filter returns 300+ procurement roles;
+    needs a tighter term.
+  - PhD-program / fellowship / apply-by-email sources — no job-listing feed (per decision).
+  - Other disabled think tanks (SIPRI, RUSI, Bruegel, Kiel, Wilson, CIDOB, IDOS, JIIA,
+    MERICS, NATO, FCDO, CASE) — careers URLs are stale/404 and resolve to JS/generic_html
+    with no supported ATS, so fixing the URL alone yields 0 jobs without per-site selectors
+    or Playwright. Left disabled rather than added as no-op crawl overhead.
+
+**Realistic next levers to widen coverage:** (1) a Playwright-backed fetcher for the iCIMS
+cluster + JS-rendered think-tank sites; (2) per-site `generic_html` selectors for static
+listing pages; (3) the weekly LLM discovery job (Step 09 proper).
 
 ## What's on disk right now (step-08-orchestration branch)
 
