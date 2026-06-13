@@ -37,6 +37,12 @@ class Settings(BaseSettings):
     token_hmac_secret: str | None = Field(default=None, alias="TOKEN_HMAC_SECRET")
     session_cookie_secret: str | None = Field(default=None, alias="SESSION_COOKIE_SECRET")
     gh_pat_for_profile_pr: str | None = Field(default=None, alias="GH_PAT_FOR_PROFILE_PR")
+    # owner/repo target for the weekly profile self-update PR. GitHub Actions sets
+    # GITHUB_REPOSITORY automatically; set it explicitly as a Vercel env var so the
+    # webapp's approve route can open the PR too.
+    github_repository: str = Field(
+        default="victorehrnrooth3/policy-crawler", alias="GITHUB_REPOSITORY"
+    )
     ranker_degrade_to_haiku_only: bool = Field(default=False, alias="RANKER_DEGRADE_TO_HAIKU_ONLY")
 
 

@@ -18,6 +18,9 @@ dependencies = [
     "python-dotenv~=1.0",
     "psycopg[binary,pool]~=3.2",
     "pyyaml~=6.0",
+    # ruamel.yaml (not just pyyaml) preserves comments + key ordering when the
+    # weekly self-update patches data/profile.yaml — see self_update/apply_diff.py.
+    "ruamel.yaml~=0.18",
     "structlog~=24.1",
     # anthropic SDK intentionally not ~=-pinned: per docs/03-tech-stack.md we
     # want bug fixes and new-model support; pin here only if a regression bites.

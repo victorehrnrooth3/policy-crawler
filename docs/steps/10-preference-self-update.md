@@ -1,5 +1,15 @@
 # Step 10 — Preference Self-Update
 
+## Status
+
+**Done** (functionally complete). The `self_update` package ships in
+`step-09-source-config`. The weekly pipeline (`--kind weekly`) calls
+`run_self_update` after discovery; the webapp `/profile` approve button calls
+`apply_proposed`, which opens a PR via the GitHub REST API. See "As-built
+departures" at the bottom for differences between this spec and what was built.
+
+---
+
 ## Goal
 
 Once a week, propose a structured diff to `data/profile.yaml` based on the past week's feedback, with a per-change rationale. Surface the diff for me to approve in the webapp. Apply the diff only on my approval, via a PR opened by the workflow.
@@ -108,3 +118,21 @@ In the webapp `/profile`:
 
 - Add a "drift report": measure cosine similarity between the past week's profile and the previous month's average; flag if drift > threshold for human review.
 - A weekly digest email summarizing which proposed changes I accepted/rejected (auditing).
+- **Side-by-side rendered diff in `/profile`**: the webapp currently shows the raw ops JSON + a rationale `<details>`. A proper old-vs-new YAML view (compute new text client- or server-side and diff it) is a UX nicety, not yet built.
+- **Collapsible "full proposed YAML" view**: deferred for the same reason.
+
+## As-built departures
+
+The code is authoritative; this section explains the delta from the spec above.
+
+**PR is opened via the GitHub REST API, not `peter-evans/create-pull-request` or a `gh` shellout.** The approve action runs in the webapp on Vercel's read-only, repo-less filesystem, where neither a checkout nor the `gh` CLI exists. `self_update/run.py:_open_profile_pr` instead calls `api.github.com` directly with `httpx` + the `GH_PAT_FOR_PROFILE_PR`: read `main`'s head sha, GET the current `data/profile.yaml`, apply the patch to *that* text (not the possibly-stale bundled copy), create a branch, commit, and open the PR. A new `GITHUB_REPOSITORY` setting (defaulting to `victorehrnrooth3/policy-crawler`) names the target repo.
+
+**`apply_to_yaml` is split into `apply_to_yaml_text(text, ops)` + a thin path wrapper.** The text variant lets the webapp patch content fetched from GitHub without touching the filesystem; the weekly CLI path-based wrapper delegates to it.
+
+**Guardrails live in the patch engine, enforced for both entry points.** `apply_diff.py` rejects ops touching `version` / `identity.cv_url` and any op that empties `must_haves` / `dealbreakers`, plus invalid paths / out-of-range indices. `run_self_update` dry-runs `apply(profile, ops)` before persisting, so a guardrail-violating diff is never queued.
+
+**`run_self_update` skips the LLM call entirely on a zero-feedback week** (no `feedback` rows in the window) and inserts no `proposed_profile_changes` row when the model returns zero ops — both are valid no-op outcomes, not errors.
+
+**No standalone `weekly.yml` step for self-update.** Per Step 08's as-built (single unified `--kind weekly`), self-update runs inside the one weekly invocation after discovery, not as a separate workflow step. The `weekly_self_update` `--kind` remains for ad-hoc CLI / `workflow_dispatch` use.
+
+**Feedback summarization is heuristic, as specified**: vote tallies, liked/disliked job lists with free-text, posting-type mix, a light geography token scan, and stopword-filtered free-text theme frequency (threshold ≥ 2 occurrences).
