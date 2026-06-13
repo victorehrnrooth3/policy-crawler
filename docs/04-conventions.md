@@ -27,14 +27,16 @@ policy-crawler/
       __init__.py
       base.py               # Fetcher abstract base + RawJob type
       registry.py           # fetcher_kind -> Fetcher map
+      detect.py             # ATS signature detection (URL patterns + direct API probing)
       greenhouse.py
       lever.py
       ashby.py
+      workable.py
+      smartrecruiters.py
+      rippling.py
       workday.py
-      rss.py
-      sitemap.py
-      generic_html.py
-      playwright.py
+      camoufox_llm.py       # Tier-3 long-tail: Camoufox render + Haiku extract
+      generic_html.py       # Retained (enum value); 0 enabled sources
       manual.py
       normalize.py          # RawJob -> Job
       dedupe.py
@@ -53,9 +55,7 @@ policy-crawler/
       tokens.py             # HMAC signing for vote links
     discovery/
       __init__.py
-      summarize_likes.py
-      propose_sources.py
-      validate.py
+      run.py                # Unified: summarize → Sonnet propose → detect_ats → insert pending
     self_update/
       __init__.py
       summarize_feedback.py
@@ -81,8 +81,7 @@ policy-crawler/
     test_<module>.py
   .github/
     workflows/
-      daily.yml
-      weekly.yml
+      weekly.yml            # cron Sun 07:30 UTC — full pipeline (crawl+rank+digest+discover+self-update)
       ci.yml                # lint + test on PR
   vercel.json               # Python runtime config
 ```
@@ -154,3 +153,5 @@ Document each as you discover them so the next agent doesn't repeat the mistake.
 - **Migrations must use `NEON_DATABASE_URL_DIRECT`**: Neon's pgbouncer (the `-pooler` host) runs in transaction pooling mode and silently breaks DDL that depends on session state. `migrations/_apply.py` reads the direct URL; the app pool (`db.py`) reads the pooled URL. Mixing them up surfaces as "prepared statement does not exist" errors.
 - **`get_pool()` is `@cache`-d**: tests that touch the DB must call `get_pool.cache_clear()` in an `autouse` fixture — same pattern as `get_settings`.
 - **Corporate egress filters block port 5432**: symptom is TCP handshake succeeds but `psycopg.connect()` fails with `server closed the connection unexpectedly` the moment the Postgres `SSLRequest` packet is sent (L7 proxy drops non-HTTPS). Workarounds: mobile tether, home wifi, or run the migration from CI.
+- **Camoufox requires a separate browser download**: `pip install -e ".[camoufox]"` installs the Python package but the patched Firefox binary must be downloaded separately with `python -m camoufox fetch` (~80 MB). The weekly CI workflow does this automatically; local smoke tests require it manually. The import is lazy (`from camoufox.sync_api import Camoufox` inside the function body) so the dev install (`.[dev]`) works fine without the browser.
+- **`iCIMS` pages need a longer render wait**: the `#icims_content_iframe` typically takes 12–15 seconds to attach as a browser frame. The default `fetcher_config.wait_seconds = 6` is enough for most pages. For iCIMS sources, set `wait_seconds: 15` in `fetcher_config`.

@@ -1,5 +1,13 @@
 # Step 09 — Source Discovery
 
+## Status
+
+**Done** (functionally complete). `discovery/run.py` ships in `step-09-source-config`. Acceptance criteria below are met. Step 10 is the next step to implement.
+
+See "As-built departures" at the bottom for differences between this spec and what was built.
+
+---
+
 ## Goal
 
 Once a week, propose new employers to monitor based on patterns in my likes/dislikes. Verify the suggestions are real and reachable, then queue them for my approval in the webapp. Never auto-add.
@@ -17,91 +25,66 @@ Once a week, propose new employers to monitor based on patterns in my likes/disl
 
 ## Deliverables
 
-- `src/policy_crawler/discovery/summarize_likes.py`:
-  - `build_summary(window_days=30) -> LikeSummary`:
-    - Top 20 up-voted jobs in window with: title, company, source category, posting type, geography, fit score, free-text snippet.
-    - Top 20 down-voted jobs in window with the same fields.
-    - Aggregates: counts per source category, per topic keyword (tokenize titles + descriptions, count against `profile.topics.heavy.keywords`), per geography.
-- `src/policy_crawler/discovery/propose_sources.py`:
-  - `propose(summary: LikeSummary, k: int = 15) -> list[CandidateSource]`:
-    - Sonnet 4.6 call with a tool-use schema:
-      ```python
-      PROPOSE_TOOL = {
-        "name": "propose_sources",
-        "description": "Propose new employers to monitor based on user's preference patterns.",
-        "input_schema": {
-          "type": "object",
-          "properties": {
-            "candidates": {
-              "type": "array",
-              "items": {
-                "type": "object",
-                "properties": {
-                  "name": {"type": "string"},
-                  "homepage_url": {"type": "string"},
-                  "careers_url": {"type": "string"},
-                  "category": {"type": "string", "enum": [...]},  # source_category enum
-                  "rationale": {"type": "string"},
-                  "example_similar_jobs": {"type": "array", "items": {"type": "string"}}
-                },
-                "required": ["name","homepage_url","careers_url","category","rationale","example_similar_jobs"]
-              }
-            }
-          },
-          "required": ["candidates"]
-        }
-      }
-      ```
-    - Prompt includes: the LikeSummary, the current active source list (as a text dump grouped by category — to avoid duplicates), and the relevant section of `02-personal-context.md` (geography + topics).
-    - System message stresses: do not propose sources I already monitor; favor employers, not aggregators (no LinkedIn, no Indeed); propose `careers_url`s I can verify; when in doubt about a `careers_url`, prefer the homepage and let the validator find the careers page.
-- `src/policy_crawler/discovery/validate.py`:
-  - `validate(candidate: CandidateSource) -> ValidationResult`:
-    - HEAD/GET the `careers_url` (follow redirects); reject if non-2xx.
-    - URL-pattern match for `fetcher_kind` (same heuristics as Step 03).
-    - Light heuristic: page text contains words like "careers", "join", "open positions", "jobs" → confidence boost.
-    - Returns either `(ok, suggested_fetcher_kind)` or `(reason_for_rejection, None)`.
 - `src/policy_crawler/discovery/run.py`:
   - `run_discovery(run_id) -> DiscoverySummary`:
-    - `summary = build_summary(); candidates = propose(summary, k=15); for c in candidates: r = validate(c); insert into suggested_sources`.
-    - Skip candidates whose `homepage_url` matches an existing source (case-insensitive normalized).
-    - Limit total inserted to 10 per run; remainder go to log only.
-  - CLI: `python -m policy_crawler.discovery.run`. Hooked into the weekly workflow in Step 08.
-- `tests/discovery/test_*.py`:
-  - `test_summarize.py` with synthetic feedback rows.
-  - `test_propose.py` with mocked Sonnet response asserting the schema is parsed.
-  - `test_validate.py` with mocked HTTP.
-  - `test_run.py` end-to-end with mocks; asserts dedupe against existing sources.
+    - Reads recent votes (last 30 days), existing source names, and pending suggestions from DB.
+    - Calls Sonnet 4.6 with a forced `suggest_sources` tool → 10–20 `{name, careers_url, category, rationale, example_similar_jobs}` candidates.
+    - For each candidate not already a live source or pending suggestion: calls `detect_ats(careers_url)`. If `det.kind == "unknown"` (hard fetch failure), skips. Otherwise: `fetcher_kind = det.kind if det.detected else "camoufox"`.
+    - Inserts survivors into `suggested_sources` with `status = 'pending'`. Never auto-adds to `sources`.
+    - Logs one `llm_calls` row (kind `discovery`) per run.
+  - CLI: `python -m policy_crawler.discovery.run`.
+- `tests/discovery/test_discovery.py`:
+  - Stubs Sonnet response + `detect_ats`; asserts dedupe against existing sources, `camoufox` fallback when no ATS detected, skip on unreachable URL.
 
 ## Acceptance criteria
 
 ```bash
-# With at least a few rows of synthetic feedback:
 python -m policy_crawler.discovery.run
 ```
 
 ```sql
-SELECT name, careers_url, category, status, rationale FROM suggested_sources
-WHERE status = 'pending' ORDER BY proposed_at DESC LIMIT 20;
--- Expect: 5-10 candidates with sensible names, valid URLs, reasonable rationales.
+SELECT name, careers_url, category, fetcher_kind, status, rationale
+FROM suggested_sources
+WHERE status = 'pending'
+ORDER BY proposed_at DESC
+LIMIT 20;
+-- Expect: sensible names, valid URLs, fetcher_kind = detected ATS or 'camoufox', reasonable rationales.
 ```
 
-In the webapp `/sources` "suggested" tab, the entries appear and approve/reject buttons work; approving a candidate causes it to appear in `sources` with `enabled = true, approved_by_me = true`.
+In the webapp `/sources` "suggested" tab: entries appear; approve/reject buttons work; approving a candidate inserts it into `sources` with `enabled = true`, `fetcher_kind = COALESCE(suggestion.fetcher_kind, 'camoufox')`.
 
 ## Implementation notes
 
-- **Source-list summary in the prompt**: render the active sources as a compact list grouped by category, ≤ ~1 500 tokens. The model will dedupe better if it sees the structure rather than a flat dump.
-- **Avoid aggregators**: explicit negative instruction. Reject in `validate()` if URL host matches `linkedin.com`, `indeed.com`, `glassdoor.com`, `ziprecruiter.com`, `welcometothejungle.com`.
-- **Confidence**: persist a `confidence` field on `suggested_sources` (low/med/high) based on validator signals. `/sources` UI surfaces it as a small badge.
-- **Don't auto-promote**, ever. The schema constraint `approved_by_me` exists to prevent this; the discovery code never sets `enabled = true` on `sources` directly.
-- **Cost**: weekly, one Sonnet call; ~$0.05–0.10/week. Negligible.
-- **Stale candidates**: any `pending` candidate older than 60 days is auto-snoozed via a SQL `UPDATE` at the start of each discovery run.
+- **`camoufox` as default**: when `detect_ats` returns `kind = "generic_html"` (i.e., no known ATS detected but the page is reachable), use `fetcher_kind = "camoufox"`. Never fall back to `generic_html` for newly-discovered sources — Camoufox is the long-tail strategy.
+- **Dedupe guard covers both live sources and pending queue.** Build `known_names` and `known_urls` sets from `sources` + `suggested_sources WHERE status='pending'` before processing candidates. Update these sets within the loop so two proposals in the same batch don't both insert.
+- **Skip, don't error, on unreachable URLs.** `detect_ats` returns `kind = "unknown"` when the URL is a hard 404/DNS failure. Increment `skipped_unreachable` and continue.
+- **Prompt construction**: include `profile_for_prompt(load_profile())` + recent votes as context + the list of existing source names as a dedupe guard. The prompt instructs Sonnet to propose employers not aggregators.
+- **Cost**: one Sonnet call per weekly run; ~$0.20/mo. Log via `_log_llm_call` (same pattern as `camoufox_llm.py`).
 
 ## Out of scope
 
-- Configuring selectors for newly-approved `generic_html` sources — the human (or the followup LLM-assisted configure) handles that on first crawl error.
-- Discovery for new fellowships / PhD program calls is a useful followup but not in v1.
+- Configuring selectors for newly-approved sources — `camoufox` handles any page with no extra config.
+- Discovery for new fellowships / PhD program calls — useful followup but not in v1.
 
 ## Followups
 
-- An LLM-assisted "configure selectors" mode that runs immediately after I approve a `generic_html` source.
-- Track conversion rate: of suggested sources approved, what fraction produce up-voted jobs within 30 days? Use this to refine the proposal prompt.
+The following spec items were deferred to keep the initial implementation lean. They are candidates for a future maintenance session, not blockers for Step 10.
+
+- **`confidence` field on `suggested_sources`** (low/med/high badge in `/sources` UI). The DB schema and the webapp route would both need updating.
+- **60-day auto-snooze**: at the start of each discovery run, `UPDATE suggested_sources SET status = 'snoozed' WHERE status = 'pending' AND proposed_at < now() - interval '60 days'`.
+- **Aggregator URL rejection**: in the loop, skip candidates whose `careers_url` host matches `linkedin.com`, `indeed.com`, `glassdoor.com`, `ziprecruiter.com`, `welcometothejungle.com`. The current prompt instructs Sonnet against these but there is no code enforcement.
+- **`homepage_url` field**: the spec proposed storing `homepage_url` separately and deduping by it. Currently we only dedupe by name (case-insensitive) + careers URL. Low-risk gap since `name` dedupe is the stronger signal.
+- **Structured `LikeSummary` dataclass**: the spec originally called for `summarize_likes.py` to build a typed `LikeSummary` with top-20 up/down-voted jobs before the Sonnet call. Currently we pass raw recent-vote rows directly to the prompt. If prompt quality degrades as feedback volume grows, extracting a structured pre-summary step is the fix.
+- **Conversion tracking**: of suggested sources approved, what fraction produce up-voted jobs within 30 days? This informs prompt refinement. Requires a `conversion_metric` or join on `feedback` + `jobs` + `sources`.
+
+## As-built departures
+
+This section documents how the implementation differs from the spec above. The code is authoritative; this section explains the delta.
+
+**Single module, not three.** The spec called for `discovery/summarize_likes.py` + `discovery/propose_sources.py` + `discovery/validate.py` + `discovery/run.py`. Everything lives in `discovery/run.py`. The pipeline steps are identical; the module boundaries were dropped for simplicity.
+
+**`detect_ats` replaces a custom validator.** The spec's `validate.py` described HEAD/GET + text heuristics. Instead, `detect_ats()` from `crawler/detect.py` is reused — it probes the URL for known ATS patterns, falls back to `generic_html` if reachable but unrecognized, and returns `kind = "unknown"` on hard failure. This is strictly better than a bespoke validator.
+
+**Approval default changed to `camoufox`.** The webapp's approve-suggestion route previously inserted `COALESCE(fetcher_kind, 'generic_html')`. Changed to `COALESCE(fetcher_kind, 'camoufox')` so an approved suggestion that only needed Sonnet's URL guess (no detected ATS) starts crawling on the next weekly run with zero manual config.
+
+**Tests consolidated.** One `tests/discovery/test_discovery.py` file rather than four separate test files. Coverage of the key behaviors (dedupe, camoufox fallback, skip-unreachable) is identical.

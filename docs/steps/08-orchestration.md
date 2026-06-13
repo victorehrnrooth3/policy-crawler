@@ -87,3 +87,13 @@ In GitHub Actions:
 
 - Pin runner OS for reproducibility (`ubuntu-24.04` rather than `ubuntu-latest`).
 - Consider self-hosted runners only if Anthropic egress / Neon connectivity becomes flaky on GH-hosted.
+
+## As-built departures
+
+The implementation diverges from this spec in two ways. Future agents should treat the code as authoritative, not this section.
+
+**`daily.yml` was removed.** The production schedule is a single `weekly.yml` cron (Sundays 07:30 UTC). The spec described `daily.yml` for crawl+rank+digest and `weekly.yml` for two sequential discovery/self-update invocations. That two-workflow design was simplified when Camoufox was added (it requires a browser download step that only makes sense in a weekly budget). The `daily`, `weekly_discovery`, and `weekly_self_update` `--kind` values remain in `run.py` for ad-hoc `workflow_dispatch` and CLI use.
+
+**`weekly.yml` runs one unified `--kind weekly` invocation**, not two sequential `--kind weekly_discovery; --kind weekly_self_update` calls. The `weekly` pipeline sequences: `crawl_all → score_pending → send_digest → run_discovery → _run_weekly_self_update`. It installs `.[camoufox]` and runs `python -m camoufox fetch` before the pipeline step.
+
+**`RANKER_DEGRADE_TO_HAIKU_ONLY`** — the flag exists in `config.py` and is checked by `pass2.py`, but with weekly-only runs and a full cost budget, it should not be set in GitHub Secrets. It was a temporary workaround when the ranker backlog was being cleared on a daily schedule.
