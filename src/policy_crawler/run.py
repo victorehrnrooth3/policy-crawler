@@ -4,11 +4,14 @@ Dispatches to the appropriate pipeline sequence by --kind, manages a single
 runs row for the whole execution, and sends a failure-alert email if the run
 throws an unhandled exception.
 
-Steps 09 / 10 will flesh out weekly_discovery and weekly_self_update; for
-now those kinds open and close a runs row and log "not implemented".
+``weekly`` is the unified production pipeline (crawl all tiers + rank + digest +
+source discovery + self-update). The standalone ``daily`` /
+``weekly_discovery`` / ``weekly_self_update`` kinds remain for ad-hoc
+``workflow_dispatch`` and CLI use. Step 10 (self-update) is still a stub.
 
 Usage::
 
+    python -m policy_crawler.run --kind weekly [--gh-pat TOKEN]
     python -m policy_crawler.run --kind daily
     python -m policy_crawler.run --kind weekly_discovery
     python -m policy_crawler.run --kind weekly_self_update [--gh-pat TOKEN]
@@ -29,7 +32,7 @@ from policy_crawler.obs.runs import finish_run, start_run
 
 logger = structlog.get_logger(__name__)
 
-_KINDS = ("daily", "weekly_discovery", "weekly_self_update")
+_KINDS = ("weekly", "daily", "weekly_discovery", "weekly_self_update")
 
 
 @dataclass
@@ -59,9 +62,41 @@ def _run_daily(run_id: UUID) -> _PipelineSummary:
     )
 
 
+def _run_weekly(run_id: UUID, gh_pat: str | None = None) -> _PipelineSummary:
+    """Unified weekly pipeline: crawl (all tiers) + rank + digest + discovery + self-update.
+
+    Discovery only proposes new sources (human approval required), and self-update
+    only proposes profile changes (PR), so neither affects this run's crawl/ranking —
+    they run last.
+    """
+    from policy_crawler.crawler.run import crawl_all
+    from policy_crawler.digest.send import send_digest
+    from policy_crawler.ranker.run import score_pending
+
+    crawl_summary = crawl_all(run_id=run_id)
+    rank_summary = score_pending(run_id=run_id)
+    send_digest()
+    disc_summary = _run_weekly_discovery(run_id)
+    _run_weekly_self_update(run_id, gh_pat=gh_pat)
+
+    return _PipelineSummary(
+        jobs_seen=crawl_summary.jobs_seen,
+        jobs_new=crawl_summary.jobs_new,
+        llm_calls_count=rank_summary.pass1_scored
+        + rank_summary.pass2_scored
+        + disc_summary.llm_calls_count,
+        total_cost_usd=rank_summary.total_cost_usd + disc_summary.total_cost_usd,
+    )
+
+
 def _run_weekly_discovery(run_id: UUID) -> _PipelineSummary:
-    logger.info("run.weekly_discovery.not_implemented", run_id=str(run_id))
-    return _PipelineSummary()
+    from policy_crawler.discovery.run import run_discovery
+
+    summary = run_discovery(run_id=run_id)
+    return _PipelineSummary(
+        llm_calls_count=1 if summary.candidates_proposed or summary.errors else 0,
+        total_cost_usd=summary.cost_usd,
+    )
 
 
 def _run_weekly_self_update(run_id: UUID, gh_pat: str | None = None) -> _PipelineSummary:
@@ -116,7 +151,9 @@ def run(kind: str, *, gh_pat: str | None = None) -> None:
     run_id = start_run(kind)
     logger.info("run.start", kind=kind, run_id=str(run_id))
     try:
-        if kind == "daily":
+        if kind == "weekly":
+            summary = _run_weekly(run_id, gh_pat=gh_pat)
+        elif kind == "daily":
             summary = _run_daily(run_id)
         elif kind == "weekly_discovery":
             summary = _run_weekly_discovery(run_id)

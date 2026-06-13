@@ -42,9 +42,10 @@ dev = [
     "freezegun~=1.5",
     "respx~=0.21",
 ]
-# Tier-5 fallback only. Kept out of the default install so a fresh `pip install -e .[dev]`
-# does not pull down a browser toolchain.
-playwright = ["playwright~=1.47"]
+# Tier-2 long-tail fetcher. Kept out of the default install so a fresh
+# `pip install -e .[dev]` does not pull down a browser toolchain. After install,
+# run `python -m camoufox fetch` once to download the patched Firefox binary.
+camoufox = ["camoufox[geoip]"]
 
 [tool.setuptools.packages.find]
 where = ["src"]

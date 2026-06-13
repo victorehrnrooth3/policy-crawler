@@ -159,12 +159,22 @@ def test_exception_sends_failure_alert() -> None:
 # ── Weekly stubs open / close runs rows too ───────────────────────────────────
 
 
+def _mock_discovery_summary(cost: float = 0.02) -> MagicMock:
+    m = MagicMock()
+    m.candidates_proposed = 5
+    m.suggestions_inserted = 3
+    m.cost_usd = cost
+    m.errors = []
+    return m
+
+
 def test_weekly_discovery_opens_and_closes_run_row() -> None:
     run_id = uuid4()
 
     with (
         patch("policy_crawler.run.start_run", return_value=run_id) as mock_start,
         patch("policy_crawler.run.finish_run") as mock_finish,
+        patch("policy_crawler.discovery.run.run_discovery", return_value=_mock_discovery_summary()),
     ):
         from policy_crawler.run import run
 
@@ -173,6 +183,42 @@ def test_weekly_discovery_opens_and_closes_run_row() -> None:
     mock_start.assert_called_once_with("weekly_discovery")
     mock_finish.assert_called_once()
     assert mock_finish.call_args.kwargs["status"] == "succeeded"
+
+
+def test_weekly_runs_full_pipeline_in_order() -> None:
+    run_id = uuid4()
+    call_order: list[str] = []
+
+    def _track(name: str, ret: object):
+        def _fn(*_a: object, **_kw: object) -> object:
+            call_order.append(name)
+            return ret
+
+        return _fn
+
+    with (
+        patch("policy_crawler.run.start_run", return_value=run_id),
+        patch("policy_crawler.run.finish_run"),
+        patch(
+            "policy_crawler.crawler.run.crawl_all",
+            side_effect=_track("crawl", _mock_crawl_summary()),
+        ),
+        patch(
+            "policy_crawler.ranker.run.score_pending",
+            side_effect=_track("rank", _mock_rank_summary()),
+        ),
+        patch("policy_crawler.digest.send.send_digest", side_effect=_track("digest", None)),
+        patch(
+            "policy_crawler.discovery.run.run_discovery",
+            side_effect=_track("discovery", _mock_discovery_summary()),
+        ),
+    ):
+        from policy_crawler.run import run
+
+        run("weekly")
+
+    # Crawl + rank + digest first; discovery (proposals only) runs last.
+    assert call_order == ["crawl", "rank", "digest", "discovery"]
 
 
 def test_weekly_self_update_opens_and_closes_run_row() -> None:

@@ -240,6 +240,10 @@ def crawl_all(
             log.warning("crawl.unknown_fetcher")
             continue
 
+        # Expose the run id to fetchers that log their own cost (e.g. the
+        # camoufox Tier-2 fetcher writes an llm_calls row per page).
+        source["_run_id"] = run_id
+
         raw_jobs = []
         try:
             raw_jobs = list(fetcher.fetch(source))

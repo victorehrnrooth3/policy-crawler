@@ -11,7 +11,7 @@
 
     <label>Fetcher kind</label>
     <select name="fetcher_kind">
-      {% for kind in ['greenhouse','lever','ashby','workable','smartrecruiters','workday_json','rss','sitemap','generic_html','playwright','manual'] %}
+      {% for kind in ['greenhouse','lever','ashby','workable','smartrecruiters','workday_json','rippling','camoufox','generic_html','manual'] %}
       <option value="{{ kind }}" {% if source.fetcher_kind == kind %}selected{% endif %}>{{ kind }}</option>
       {% endfor %}
     </select>

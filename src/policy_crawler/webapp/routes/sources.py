@@ -88,7 +88,7 @@ async def approve_suggestion(
             INSERT INTO sources (name, careers_url, category, fetcher_kind, approved_by_me, enabled)
             SELECT name, careers_url,
                    COALESCE(category, 'think_tank')::source_category,
-                   COALESCE(fetcher_kind, 'generic_html')::fetcher_kind,
+                   COALESCE(fetcher_kind, 'camoufox')::fetcher_kind,
                    true, true
             FROM suggested_sources WHERE id = %s
             """,
