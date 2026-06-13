@@ -126,7 +126,7 @@ def test_cost_positive() -> None:
 
 
 def test_fetch_yields_rawjobs(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(camoufox_llm, "render_candidates", lambda url, wait: _candidates())
+    monkeypatch.setattr(camoufox_llm, "render_candidates_isolated", lambda url, wait: _candidates())
     monkeypatch.setattr(camoufox_llm, "_log_llm_call", lambda *a, **k: None)
 
     settings = MagicMock()
@@ -151,9 +151,9 @@ def test_fetch_yields_rawjobs(monkeypatch: pytest.MonkeyPatch) -> None:
 
 def test_fetch_render_failure_yields_nothing(monkeypatch: pytest.MonkeyPatch) -> None:
     def boom(url: str, wait: int) -> _Candidates:
-        raise RuntimeError("camoufox not installed")
+        raise RuntimeError("camoufox render produced no result (driver crash)")
 
-    monkeypatch.setattr(camoufox_llm, "render_candidates", boom)
+    monkeypatch.setattr(camoufox_llm, "render_candidates_isolated", boom)
     settings = MagicMock()
     settings.anthropic_api_key = "sk-test"
     monkeypatch.setattr(camoufox_llm, "get_settings", lambda: settings)

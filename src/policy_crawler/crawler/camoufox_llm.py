@@ -23,6 +23,8 @@ stub it without a real browser.
 from __future__ import annotations
 
 import hashlib
+import multiprocessing as mp
+import queue as _queue
 import time
 from collections.abc import Iterable
 from dataclasses import dataclass, field
@@ -49,6 +51,10 @@ _DEFAULT_WAIT_SECONDS = 6
 _MAX_BLOB_CHARS = 8_000  # cap the candidate blob fed to Haiku
 _MAX_ANCHORS = 400  # cap anchors collected per page
 _MAX_INNERTEXT_CHARS = 3_000
+# Hard cap for one source's render (goto ≤45s + hydrate wait + slack). The render
+# runs in a child process; if it exceeds this, the child is killed and the source
+# is skipped. Generous enough for the slow iCIMS pages (wait_seconds=15).
+_RENDER_TIMEOUT_SECONDS = 120
 
 # JS run inside each frame: collect anchors (text+href) so we can correlate them
 # with job titles. Kept tiny and dependency-free so it runs in any frame. The
@@ -158,6 +164,62 @@ def render_candidates(careers_url: str, wait_seconds: int = _DEFAULT_WAIT_SECOND
                 texts.append(frame_text)
 
     return _Candidates(anchors=anchors[:_MAX_ANCHORS], text="\n".join(texts))
+
+
+def _render_worker(careers_url: str, wait_seconds: int, q: Any) -> None:
+    """Child-process entry: render and post the result (or error) back via *q*."""
+    try:
+        cand = render_candidates(careers_url, wait_seconds)
+        q.put(("ok", {"anchors": cand.anchors, "text": cand.text}))
+    except BaseException as exc:  # noqa: BLE001 - report everything to the parent
+        q.put(("err", f"{type(exc).__name__}: {exc}"))
+
+
+def render_candidates_isolated(
+    careers_url: str,
+    wait_seconds: int = _DEFAULT_WAIT_SECONDS,
+    timeout: int = _RENDER_TIMEOUT_SECONDS,
+) -> _Candidates:
+    """Run :func:`render_candidates` in a spawned child process.
+
+    Camoufox drives Playwright's Firefox, a Node subprocess. A malformed page
+    ``pageError`` event can crash that driver hard — it prints a Node stack trace
+    and calls ``process.exit``, which is *not* a catchable Python exception and
+    would otherwise kill the entire crawl (skipping our ``except`` and the run's
+    failure-alert path entirely). Isolating the render contains both that crash
+    and any hang: the child dies, we raise here, and the caller skips one source.
+    """
+    ctx = mp.get_context("spawn")
+    q: Any = ctx.Queue()
+    proc = ctx.Process(target=_render_worker, args=(careers_url, wait_seconds, q), daemon=True)
+    proc.start()
+
+    result: tuple[str, Any] | None = None
+    deadline = time.monotonic() + timeout
+    while time.monotonic() < deadline:
+        try:
+            result = q.get(timeout=1.0)
+            break
+        except _queue.Empty:
+            if not proc.is_alive():
+                break  # child crashed before posting a result
+
+    if proc.is_alive():
+        proc.terminate()
+        proc.join(5)
+        if proc.is_alive():
+            proc.kill()
+    proc.join(5)
+
+    if result is None:
+        raise RuntimeError(
+            f"camoufox render produced no result (exit_code={proc.exitcode}; "
+            f"driver crash or >{timeout}s hang)"
+        )
+    status, payload = result
+    if status == "err":
+        raise RuntimeError(payload)
+    return _Candidates(anchors=payload["anchors"], text=payload["text"])
 
 
 # ── Extraction ────────────────────────────────────────────────────────────────
@@ -290,7 +352,7 @@ class CamoufoxLLMFetcher(Fetcher):
         client = anthropic.Anthropic(api_key=settings.anthropic_api_key)
 
         try:
-            cand = render_candidates(careers_url, wait_seconds)
+            cand = render_candidates_isolated(careers_url, wait_seconds)
         except Exception as exc:  # noqa: BLE001 - one bad source shouldn't kill the run
             log.warning("camoufox.render_failed", error=str(exc))
             return

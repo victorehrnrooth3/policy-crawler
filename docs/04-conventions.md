@@ -58,9 +58,10 @@ policy-crawler/
       run.py                # Unified: summarize → Sonnet propose → detect_ats → insert pending
     self_update/
       __init__.py
-      summarize_feedback.py
-      propose_diff.py
-      apply_diff.py
+      summarize_feedback.py   # week's feedback -> FeedbackSummary
+      propose_diff.py         # Sonnet -> bounded PatchOp list
+      apply_diff.py           # JSON-Pointer-ish patch engine (ruamel) + guardrails
+      run.py                  # run_self_update (propose) + apply_proposed (open PR)
     webapp/
       __init__.py
       main.py               # FastAPI app entrypoint
@@ -155,3 +156,6 @@ Document each as you discover them so the next agent doesn't repeat the mistake.
 - **Corporate egress filters block port 5432**: symptom is TCP handshake succeeds but `psycopg.connect()` fails with `server closed the connection unexpectedly` the moment the Postgres `SSLRequest` packet is sent (L7 proxy drops non-HTTPS). Workarounds: mobile tether, home wifi, or run the migration from CI.
 - **Camoufox requires a separate browser download**: `pip install -e ".[camoufox]"` installs the Python package but the patched Firefox binary must be downloaded separately with `python -m camoufox fetch` (~80 MB). The weekly CI workflow does this automatically; local smoke tests require it manually. The import is lazy (`from camoufox.sync_api import Camoufox` inside the function body) so the dev install (`.[dev]`) works fine without the browser.
 - **`iCIMS` pages need a longer render wait**: the `#icims_content_iframe` typically takes 12–15 seconds to attach as a browser frame. The default `fetcher_config.wait_seconds = 6` is enough for most pages. For iCIMS sources, set `wait_seconds: 15` in `fetcher_config`.
+- **A Camoufox/Playwright driver crash is NOT a Python exception**: the Firefox driver is a Node subprocess. A malformed page `pageError` event can crash it (`TypeError: Cannot read properties of undefined (reading 'url')` in `coreBundle.js`), at which point Node prints a stack trace and `process.exit`s — killing the whole crawl before any `try/except` (or the run's failure-alert) can fire. That's why `camoufox_llm.fetch` calls `render_candidates_isolated`, which runs the render in a spawned child process: a driver crash or hang dies with the child, and the parent logs `camoufox.render_failed` and skips just that one source. Never call `render_candidates` directly from the crawl path — always go through the isolated wrapper.
+- **Profile self-update opens its PR via the GitHub REST API, not `git`/`gh`**: the approve action runs in the webapp on Vercel's read-only, repo-less filesystem, so `self_update/run.py:apply_proposed` creates the branch + commit + PR through `api.github.com` with the `GH_PAT_FOR_PROFILE_PR`. It patches the `data/profile.yaml` fetched from `main` (not the bundled copy, which can be stale). The original Step 10 spec's `peter-evans/create-pull-request` / `gh` shellout only makes sense inside an Action, not the serverless webapp.
+- **Self-update patch paths are validated, not free-form**: `apply_diff.py` rejects any op touching `version` or `identity.cv_url`, and any op that would leave `must_haves` or `dealbreakers` empty. The model is also told this in the prompt, but the code is the enforcement — don't rely on the prompt alone.
