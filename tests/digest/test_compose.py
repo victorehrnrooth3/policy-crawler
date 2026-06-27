@@ -57,16 +57,49 @@ def _mock_connection(rows: list[dict[str, Any]]) -> MagicMock:
     return conn
 
 
-def test_pick_jobs_returns_top_k() -> None:
+def test_pick_jobs_includes_all_above_threshold() -> None:
     from policy_crawler.digest.compose import pick_jobs
 
-    jobs = [_make_job(pass2_score=90 - i * 5) for i in range(12)]
+    # 10 jobs all scoring >= 70 — the digest must include them all, not cap at 8.
+    jobs = [_make_job(pass2_score=95 - i) for i in range(10)]
     with patch("policy_crawler.digest.compose.connection", return_value=_mock_connection(jobs)):
-        result = pick_jobs(date.today(), k_top=8, k_borderline=2)
+        result = pick_jobs(date.today(), threshold=70, min_jobs=8, k_borderline=0)
 
     top = [j for j in result if not j["_borderline"]]
-    assert len(top) == 8
-    assert top[0]["pass2_score"] == 90  # highest first
+    assert len(top) == 10  # exceeds the floor of 8
+    assert top[0]["pass2_score"] == 95
+
+
+def test_pick_jobs_falls_back_to_min_when_few_clear_threshold() -> None:
+    from policy_crawler.digest.compose import pick_jobs
+
+    # Only 3 clear 70; the rest are below — fall back to the top min_jobs (8).
+    above = [_make_job(pass2_score=90 - i * 5) for i in range(3)]  # 90, 85, 80
+    below = [_make_job(pass2_score=60 - i * 5, pass1_score=60 - i * 5) for i in range(7)]
+    rows = above + below  # 10 rows, pre-sorted desc
+
+    with patch("policy_crawler.digest.compose.connection", return_value=_mock_connection(rows)):
+        result = pick_jobs(date.today(), threshold=70, min_jobs=8, k_borderline=0)
+
+    top = [j for j in result if not j["_borderline"]]
+    assert len(top) == 8  # floor applied
+
+
+def test_pick_jobs_explicit_threshold() -> None:
+    from policy_crawler.digest.compose import pick_jobs
+
+    rows = [
+        _make_job(pass2_score=90),
+        _make_job(pass2_score=85),
+        _make_job(pass2_score=70),
+        _make_job(pass2_score=60),
+    ]
+    with patch("policy_crawler.digest.compose.connection", return_value=_mock_connection(rows)):
+        result = pick_jobs(date.today(), threshold=80, min_jobs=2, k_borderline=0)
+
+    top = [j for j in result if not j["_borderline"]]
+    assert len(top) == 2
+    assert all(j["pass2_score"] >= 80 for j in top)
 
 
 def test_pick_jobs_borderline_detected() -> None:
@@ -79,7 +112,7 @@ def test_pick_jobs_borderline_detected() -> None:
     rows = top_jobs + [borderline_job]
 
     with patch("policy_crawler.digest.compose.connection", return_value=_mock_connection(rows)):
-        result = pick_jobs(date.today(), k_top=8, k_borderline=2)
+        result = pick_jobs(date.today(), threshold=70, min_jobs=8, k_borderline=2)
 
     borderline = [j for j in result if j["_borderline"]]
     assert len(borderline) == 1
@@ -113,7 +146,7 @@ def test_pick_jobs_borderline_capped_at_k() -> None:
     rows = top_jobs + borderline_jobs
 
     with patch("policy_crawler.digest.compose.connection", return_value=_mock_connection(rows)):
-        result = pick_jobs(date.today(), k_top=8, k_borderline=2)
+        result = pick_jobs(date.today(), threshold=70, min_jobs=8, k_borderline=2)
 
     borderline = [j for j in result if j["_borderline"]]
     assert len(borderline) == 2
@@ -140,7 +173,7 @@ def test_pick_jobs_marks_borderline_flag() -> None:
         "policy_crawler.digest.compose.connection",
         return_value=_mock_connection([top_job, borderline_job]),
     ):
-        result = pick_jobs(date.today(), k_top=1, k_borderline=1)
+        result = pick_jobs(date.today(), threshold=70, min_jobs=1, k_borderline=1)
 
     assert result[0]["_borderline"] is False
     assert result[1]["_borderline"] is True
@@ -177,7 +210,7 @@ def test_mark_digest_sent_executes_update() -> None:
 def test_pick_jobs_live_smoke() -> None:
     from policy_crawler.digest.compose import pick_jobs
 
-    result = pick_jobs(date.today(), k_top=3, k_borderline=1)
+    result = pick_jobs(date.today(), threshold=70, min_jobs=3, k_borderline=1)
     assert isinstance(result, list)
     for job in result:
         assert "id" in job

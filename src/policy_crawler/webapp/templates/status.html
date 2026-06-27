@@ -6,8 +6,21 @@
 </div>
 
 <div class="card">
-  <h2>Database</h2>
-  <p>{{ job_count }} total jobs &mdash; {{ scored_count }} scored</p>
+  <h2>Spend</h2>
+  <p>
+    Today: <strong class="{% if daily_spend >= daily_cap %}error{% endif %}">${{ "%.4f" | format(daily_spend) }}</strong>
+    / ${{ "%.2f" | format(daily_cap) }} daily cap
+  </p>
+  <p>
+    This month: <strong class="{% if monthly_spend >= monthly_cap %}error{% endif %}">${{ "%.4f" | format(monthly_spend) }}</strong>
+    / ${{ "%.2f" | format(monthly_cap) }} monthly cap
+  </p>
+</div>
+
+<div class="card">
+  <h2>Pending review</h2>
+  <p>{{ pending_sources }} suggested source(s) &mdash; {{ pending_changes }} profile change(s)</p>
+  <p class="muted">{{ job_count }} total jobs &mdash; {{ scored_count }} scored</p>
 </div>
 
 <div class="card">
@@ -69,16 +82,28 @@
 {% endif %}
 
 <div class="card">
-  <h2>Sources ({{ sources | length }})</h2>
+  <h2>Source health ({{ sources | length }} enabled)</h2>
   <table class="data-table">
-    <thead><tr><th>Name</th><th>Kind</th><th>Enabled</th><th>Last success</th></tr></thead>
+    <thead><tr><th>Name</th><th>Category</th><th>Kind</th><th>Last checked</th><th>Last success</th><th>Gap</th></tr></thead>
     <tbody>
     {% for s in sources %}
-    <tr class="{% if not s.enabled %}disabled{% endif %}">
+    <tr>
       <td>{{ s.name }}</td>
+      <td>{{ s.category }}</td>
       <td>{{ s.fetcher_kind }}</td>
-      <td>{{ 'yes' if s.enabled else 'no' }}</td>
+      <td>{{ s.last_checked_at or '—' }}</td>
       <td>{{ s.last_success_at or '—' }}</td>
+      <td>
+        {% if s.gap_days is none %}
+        <span class="error">never</span>
+        {% elif s.gap_days > 3 %}
+        <span class="error">{{ s.gap_days }}d</span>
+        {% elif s.gap_days > 1 %}
+        <span class="warn">{{ s.gap_days }}d</span>
+        {% else %}
+        {{ s.gap_days }}d
+        {% endif %}
+      </td>
     </tr>
     {% endfor %}
     </tbody>

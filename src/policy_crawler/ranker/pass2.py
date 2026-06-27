@@ -10,6 +10,7 @@ from uuid import UUID
 import anthropic
 import structlog
 
+from policy_crawler.obs.cost import compute_call_cost
 from policy_crawler.ranker.profile import Profile, format_exemplars, profile_for_prompt
 from policy_crawler.ranker.prompts import SYSTEM_PROMPT, format_recent_feedback, pass2_prompt
 from policy_crawler.ranker.schemas import PASS2_TOOL
@@ -17,9 +18,9 @@ from policy_crawler.ranker.schemas import PASS2_TOOL
 logger = structlog.get_logger(__name__)
 
 _MODEL = "claude-sonnet-4-6"
+# Degraded fallback when the daily soft cap is hit: same Pass-2 prompt, cheaper model.
+_DEGRADED_MODEL = "claude-haiku-4-5-20251001"
 _MAX_TOKENS = 512
-_INPUT_PRICE_PER_1M = 3.00  # USD — Sonnet 4.6 input
-_OUTPUT_PRICE_PER_1M = 15.00  # USD — Sonnet 4.6 output
 
 
 @dataclass
@@ -35,6 +36,7 @@ class Pass2Result:
     output_tokens: int
     cost_usd: float
     model: str = _MODEL
+    degraded: bool = False
     error: str | None = None
 
 
@@ -53,10 +55,8 @@ def _as_str_list(val: Any) -> list[str]:
 
 
 def _cost(input_tokens: int, output_tokens: int) -> float:
-    return (
-        input_tokens / 1_000_000 * _INPUT_PRICE_PER_1M
-        + output_tokens / 1_000_000 * _OUTPUT_PRICE_PER_1M
-    )
+    # Delegates to the single price table in obs.cost so constants never drift.
+    return compute_call_cost(_MODEL, input_tokens, output_tokens)
 
 
 def _extract(message: anthropic.types.Message) -> dict[str, Any] | None:
@@ -72,8 +72,17 @@ def deep_score(
     client: anthropic.Anthropic,
     recent_votes: list[dict[str, Any]] | None = None,
     run_id: UUID | None = None,
+    degrade: bool = False,
 ) -> list[Pass2Result]:
-    """Deep-score *jobs* with Sonnet. Only eligible jobs should be passed in."""
+    """Deep-score *jobs* with Sonnet. Only eligible jobs should be passed in.
+
+    When *degrade* is True the daily soft cap has been hit, so Pass 2 runs on
+    Haiku (same prompt) instead of Sonnet; results are tagged ``degraded=True``.
+    The caller (``score_pending``) makes the cap decision once, before the batch.
+    """
+    model = _DEGRADED_MODEL if degrade else _MODEL
+    if degrade:
+        logger.warning("pass2.degraded_to_haiku", model=model, count=len(jobs))
     profile_md = profile_for_prompt(profile)
     exemplars_md = format_exemplars(profile)
     feedback_md = format_recent_feedback(recent_votes or [])
@@ -98,7 +107,7 @@ def deep_score(
             )
             try:
                 response = client.messages.create(
-                    model=_MODEL,
+                    model=model,
                     max_tokens=_MAX_TOKENS,
                     system=system,
                     messages=[{"role": "user", "content": prompt}],
@@ -124,6 +133,8 @@ def deep_score(
                             input_tokens=0,
                             output_tokens=0,
                             cost_usd=0.0,
+                            model=model,
+                            degraded=degrade,
                             error=str(exc),
                         )
                     )
@@ -143,7 +154,9 @@ def deep_score(
                 recommended_action=tool_input.get("recommended_action") or "needs_human_review",
                 input_tokens=usage.input_tokens,
                 output_tokens=usage.output_tokens,
-                cost_usd=_cost(usage.input_tokens, usage.output_tokens),
+                cost_usd=compute_call_cost(model, usage.input_tokens, usage.output_tokens),
+                model=model,
+                degraded=degrade,
             )
         )
         log.info(

@@ -144,7 +144,7 @@ Rough budget (78 active sources, weekly cadence, ~70 new jobs/week):
 - Source discovery: 1 Sonnet call/week ≈ $0.20/month
 - **Total: ~$4.20/month** — under the $5/month target.
 
-Note: `crawl_extract` costs (Camoufox/Haiku) are tracked in `llm_calls` rows but not currently included in `runs.total_cost_usd`. Step 11 will aggregate them.
+Note: as of Step 11, `runs.total_cost_usd` is re-derived at finish time by summing every `llm_calls` row for the run (`obs.cost.run_spend`), so `crawl_extract` (Camoufox/Haiku), pass1/2, discovery, and self_update costs are all folded in automatically.
 
 ### Structured output
 

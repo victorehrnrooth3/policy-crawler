@@ -8,12 +8,17 @@
 </head>
 <body>
   {% block nav %}
+  {% set path = request.url.path %}
   <nav>
-    <a href="/inbox">Inbox</a>
-    <a href="/sources">Sources</a>
-    <a href="/profile">Profile</a>
-    <a href="/status">Status</a>
-    <a href="/manual">Manual</a>
+    <a href="/inbox" class="{% if path == '/inbox' %}active{% endif %}">Inbox{% if counts %} <span class="nav-badge">{{ counts.inbox }}</span>{% endif %}</a>
+    <a href="/recommended" class="{% if path == '/recommended' %}active{% endif %}">Recommended{% if counts %} <span class="nav-badge">{{ counts.recommended }}</span>{% endif %}</a>
+    <a href="/saved" class="{% if path == '/saved' %}active{% endif %}">Saved{% if counts %} <span class="nav-badge">{{ counts.saved }}</span>{% endif %}</a>
+    <a href="/all" class="{% if path == '/all' %}active{% endif %}">All{% if counts %} <span class="nav-badge">{{ counts.all }}</span>{% endif %}</a>
+    <a href="/sources" class="{% if path == '/sources' %}active{% endif %}">Sources</a>
+    <a href="/archived" class="{% if path == '/archived' %}active{% endif %}">Archived{% if counts %} <span class="nav-badge">{{ counts.archived }}</span>{% endif %}</a>
+    <a href="/profile" class="{% if path == '/profile' %}active{% endif %}">Profile</a>
+    <a href="/status" class="{% if path == '/status' %}active{% endif %}">Status</a>
+    <a href="/manual" class="{% if path == '/manual' %}active{% endif %}">Manual</a>
   </nav>
   {% endblock %}
   <main>
@@ -22,5 +27,6 @@
   <footer>
     <small>Policy Crawler</small>
   </footer>
+  <script src="/static/app.js" defer></script>
 </body>
 </html>

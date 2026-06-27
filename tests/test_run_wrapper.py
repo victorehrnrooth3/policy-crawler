@@ -21,13 +21,26 @@ def _clear_settings(monkeypatch: pytest.MonkeyPatch) -> Generator[None, None, No
     get_settings.cache_clear()
 
 
+@pytest.fixture(autouse=True)
+def _no_db_cost(monkeypatch: pytest.MonkeyPatch) -> None:
+    # The success path re-derives run cost from the llm_calls table; in unit tests
+    # there is no DB, so echo the threaded summary totals instead of hitting it.
+    monkeypatch.setattr(
+        "policy_crawler.run._run_cost_and_calls",
+        lambda run_id, summary: (summary.total_cost_usd, summary.llm_calls_count),
+    )
+
+
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
 
-def _mock_crawl_summary(jobs_seen: int = 5, jobs_new: int = 2) -> MagicMock:
+def _mock_crawl_summary(
+    jobs_seen: int = 5, jobs_new: int = 2, sources_silent: int = 0
+) -> MagicMock:
     m = MagicMock()
     m.jobs_seen = jobs_seen
     m.jobs_new = jobs_new
+    m.sources_silent = sources_silent
     m.errors = []
     return m
 
@@ -101,6 +114,46 @@ def test_daily_opens_and_closes_run_row() -> None:
 # ── Exception handling ────────────────────────────────────────────────────────
 
 
+def test_many_silent_sources_sends_warning_email() -> None:
+    run_id = uuid4()
+    crawl_result = _mock_crawl_summary(sources_silent=6)
+
+    with (
+        patch("policy_crawler.run.start_run", return_value=run_id),
+        patch("policy_crawler.run.finish_run"),
+        patch("policy_crawler.crawler.run.crawl_all", return_value=crawl_result),
+        patch("policy_crawler.ranker.run.score_pending", return_value=_mock_rank_summary()),
+        patch("policy_crawler.digest.send.send_digest"),
+        patch("policy_crawler.run.send_warning_email") as mock_warn,
+    ):
+        from policy_crawler.run import run
+
+        run("daily")
+
+    mock_warn.assert_called_once()
+    assert mock_warn.call_args.args[0] == run_id
+    assert "6 sources" in mock_warn.call_args.args[1]
+
+
+def test_few_silent_sources_no_warning_email() -> None:
+    run_id = uuid4()
+    crawl_result = _mock_crawl_summary(sources_silent=2)
+
+    with (
+        patch("policy_crawler.run.start_run", return_value=run_id),
+        patch("policy_crawler.run.finish_run"),
+        patch("policy_crawler.crawler.run.crawl_all", return_value=crawl_result),
+        patch("policy_crawler.ranker.run.score_pending", return_value=_mock_rank_summary()),
+        patch("policy_crawler.digest.send.send_digest"),
+        patch("policy_crawler.run.send_warning_email") as mock_warn,
+    ):
+        from policy_crawler.run import run
+
+        run("daily")
+
+    mock_warn.assert_not_called()
+
+
 def test_exception_in_crawler_still_closes_run_row() -> None:
     run_id = uuid4()
 
@@ -108,7 +161,7 @@ def test_exception_in_crawler_still_closes_run_row() -> None:
         patch("policy_crawler.run.start_run", return_value=run_id),
         patch("policy_crawler.run.finish_run") as mock_finish,
         patch("policy_crawler.crawler.run.crawl_all", side_effect=RuntimeError("crawl boom")),
-        patch("policy_crawler.run._send_failure_alert"),
+        patch("policy_crawler.run.send_failure_email"),
     ):
         from policy_crawler.run import run
 
@@ -129,7 +182,7 @@ def test_exception_in_ranker_still_closes_run_row() -> None:
         patch("policy_crawler.run.finish_run") as mock_finish,
         patch("policy_crawler.crawler.run.crawl_all", return_value=crawl_result),
         patch("policy_crawler.ranker.run.score_pending", side_effect=RuntimeError("rank boom")),
-        patch("policy_crawler.run._send_failure_alert"),
+        patch("policy_crawler.run.send_failure_email"),
     ):
         from policy_crawler.run import run
 
@@ -146,14 +199,14 @@ def test_exception_sends_failure_alert() -> None:
         patch("policy_crawler.run.start_run", return_value=run_id),
         patch("policy_crawler.run.finish_run"),
         patch("policy_crawler.crawler.run.crawl_all", side_effect=RuntimeError("boom")),
-        patch("policy_crawler.run._send_failure_alert") as mock_alert,
+        patch("policy_crawler.run.send_failure_email") as mock_alert,
     ):
         from policy_crawler.run import run
 
         with pytest.raises(RuntimeError):
             run("daily")
 
-    mock_alert.assert_called_once_with("daily", "boom")
+    mock_alert.assert_called_once_with(run_id, "daily", "boom")
 
 
 # ── Weekly stubs open / close runs rows too ───────────────────────────────────

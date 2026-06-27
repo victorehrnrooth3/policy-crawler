@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import json
 import sys
 from dataclasses import dataclass, field
+from datetime import date
 from typing import Any
 from uuid import UUID
 
@@ -12,6 +14,7 @@ import structlog
 
 from policy_crawler.config import get_settings
 from policy_crawler.db import connection, execute_write, get_pool
+from policy_crawler.obs.cost import should_degrade_to_haiku
 from policy_crawler.ranker.pass1 import Pass1Result, screen
 from policy_crawler.ranker.pass2 import Pass2Result, deep_score
 from policy_crawler.ranker.profile import load_profile
@@ -81,8 +84,8 @@ WHERE id = %s
 
 _INSERT_LLM_CALL = """
 INSERT INTO llm_calls
-    (run_id, kind, model, input_tokens, output_tokens, cost_usd, error)
-VALUES (%s, %s::llm_call_kind, %s, %s, %s, %s, %s)
+    (run_id, kind, model, input_tokens, output_tokens, cost_usd, error, metadata)
+VALUES (%s, %s::llm_call_kind, %s, %s, %s, %s, %s, %s::jsonb)
 """
 
 
@@ -126,6 +129,7 @@ def _write_pass1_results(results: list[Pass1Result], run_id: UUID | None) -> Non
                         r.output_tokens,
                         r.cost_usd,
                         r.error,
+                        "{}",
                     ),
                 )
 
@@ -160,6 +164,7 @@ def _write_pass2_results(results: list[Pass2Result], run_id: UUID | None) -> Non
                         r.output_tokens,
                         r.cost_usd,
                         r.error,
+                        json.dumps({"degraded": r.degraded}),
                     ),
                 )
 
@@ -215,11 +220,23 @@ def score_pending(
         cur.execute(_SELECT_RECENT_FEEDBACK)
         recent_votes = cur.fetchall()
 
-    if settings.ranker_degrade_to_haiku_only:
+    # Per-run hard kill is the only true abort — a runaway loop is the only thing
+    # it should catch. Skip Pass 2 (the expensive Sonnet stage) gracefully if we
+    # already crossed it during Pass 1.
+    if summary.total_cost_usd >= settings.hard_kill_usd:
+        logger.warning(
+            "ranker.hard_kill", spent=round(summary.total_cost_usd, 4), cap=settings.hard_kill_usd
+        )
+    elif settings.ranker_degrade_to_haiku_only:
         logger.info("ranker.pass2.skipped_cost_kill_switch")
     elif eligible_jobs:
-        logger.info("ranker.pass2.start", count=len(eligible_jobs))
-        p2_results = deep_score(list(eligible_jobs), profile, client, list(recent_votes), run_id)
+        # Soft cap: if today's spend already hit DAILY_SOFT_CAP_USD, run Pass 2 on
+        # Haiku instead of Sonnet (degraded, but the digest still arrives).
+        degrade = should_degrade_to_haiku(date.today())
+        logger.info("ranker.pass2.start", count=len(eligible_jobs), degraded=degrade)
+        p2_results = deep_score(
+            list(eligible_jobs), profile, client, list(recent_votes), run_id, degrade=degrade
+        )
         _write_pass2_results(p2_results, run_id)
         summary.pass2_scored = len([r for r in p2_results if not r.error])
         p2_cost = sum(r.cost_usd for r in p2_results)

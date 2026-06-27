@@ -20,19 +20,22 @@ Usage::
 from __future__ import annotations
 
 import contextlib
-import os
 import sys
 from dataclasses import dataclass
-from datetime import date
 from uuid import UUID
 
 import structlog
 
+from policy_crawler.obs.alerts import send_failure_email, send_warning_email
 from policy_crawler.obs.runs import finish_run, start_run
 
 logger = structlog.get_logger(__name__)
 
 _KINDS = ("weekly", "daily", "weekly_discovery", "weekly_self_update")
+
+# Email a (deduped) heads-up if at least this many sources that used to return
+# jobs came back empty in one run — a sign a fetcher or board URL silently broke.
+_SILENT_SOURCES_WARN_THRESHOLD = 5
 
 
 @dataclass
@@ -41,6 +44,7 @@ class _PipelineSummary:
     jobs_new: int = 0
     llm_calls_count: int = 0
     total_cost_usd: float = 0.0
+    sources_silent: int = 0
 
 
 # ── Pipeline implementations ─────────────────────────────────────────────────
@@ -59,6 +63,7 @@ def _run_daily(run_id: UUID) -> _PipelineSummary:
         jobs_new=crawl_summary.jobs_new,
         llm_calls_count=rank_summary.pass1_scored + rank_summary.pass2_scored,
         total_cost_usd=rank_summary.total_cost_usd,
+        sources_silent=crawl_summary.sources_silent,
     )
 
 
@@ -89,6 +94,7 @@ def _run_weekly(run_id: UUID, gh_pat: str | None = None) -> _PipelineSummary:
         total_cost_usd=rank_summary.total_cost_usd
         + disc_summary.total_cost_usd
         + su_summary.total_cost_usd,
+        sources_silent=crawl_summary.sources_silent,
     )
 
 
@@ -115,39 +121,25 @@ def _run_weekly_self_update(run_id: UUID, gh_pat: str | None = None) -> _Pipelin
     )
 
 
-# ── Failure alert ─────────────────────────────────────────────────────────────
+# ── Cost aggregation ──────────────────────────────────────────────────────────
 
 
-def _send_failure_alert(kind: str, error: str) -> None:
+def _run_cost_and_calls(run_id: UUID, summary: _PipelineSummary) -> tuple[float, int]:
+    """True run cost = sum of *all* llm_calls for this run.
+
+    The crawl summary doesn't thread per-page ``crawl_extract`` cost back up, so
+    re-deriving from the ``llm_calls`` table is the single source of truth and
+    folds crawl + pass1/2 + discovery + self-update into one figure. Falls back
+    to the threaded summary totals if the aggregate query fails — cost accounting
+    must never block a run from being marked finished.
+    """
     try:
-        import resend as _resend
+        from policy_crawler.obs.cost import run_call_count, run_spend
 
-        from policy_crawler.config import get_settings
-
-        settings = get_settings()
-        if not (
-            settings.resend_api_key and settings.digest_to_email and settings.digest_from_email
-        ):
-            return
-        _resend.api_key = settings.resend_api_key
-        today = date.today().isoformat()
-        server = os.environ.get("GITHUB_SERVER_URL", "")
-        repo = os.environ.get("GITHUB_REPOSITORY", "")
-        run_id_env = os.environ.get("GITHUB_RUN_ID", "")
-        workflow_url = f"{server}/{repo}/actions/runs/{run_id_env}".strip("/")
-        body = (
-            f"Workflow: {workflow_url}\n\nError:\n{error}" if workflow_url else f"Error:\n{error}"
-        )
-        _resend.Emails.send(
-            {
-                "from": settings.digest_from_email,
-                "to": [settings.digest_to_email],
-                "subject": f"[policy-crawler] {kind} run failed {today}",
-                "text": body,
-            }
-        )
+        return run_spend(run_id), run_call_count(run_id)
     except Exception:
-        logger.warning("run.failure_alert.failed")
+        logger.warning("run.cost_aggregate_failed", run_id=str(run_id))
+        return summary.total_cost_usd, summary.llm_calls_count
 
 
 # ── Public entry point ────────────────────────────────────────────────────────
@@ -173,20 +165,28 @@ def run(kind: str, *, gh_pat: str | None = None) -> None:
         else:
             raise ValueError(f"Unknown kind: {kind!r}")
 
+        total_cost_usd, llm_calls_count = _run_cost_and_calls(run_id, summary)
         finish_run(
             run_id,
             status="succeeded",
             jobs_seen=summary.jobs_seen,
             jobs_new=summary.jobs_new,
-            llm_calls_count=summary.llm_calls_count,
-            total_cost_usd=summary.total_cost_usd,
+            llm_calls_count=llm_calls_count,
+            total_cost_usd=total_cost_usd,
         )
-        logger.info("run.succeeded", kind=kind, run_id=str(run_id))
+        logger.info("run.succeeded", kind=kind, run_id=str(run_id), cost=round(total_cost_usd, 4))
+
+        if summary.sources_silent >= _SILENT_SOURCES_WARN_THRESHOLD:
+            send_warning_email(
+                run_id,
+                f"{summary.sources_silent} sources that previously returned jobs came back "
+                f"empty in the {kind} run — a fetcher or board URL may have silently broken.",
+            )
     except Exception as exc:
         error_text = str(exc)
         finish_run(run_id, status="failed", error=error_text)
         logger.error("run.failed", kind=kind, run_id=str(run_id), error=error_text)
-        _send_failure_alert(kind, error_text)
+        send_failure_email(run_id, kind, error_text)
         raise
 
 
