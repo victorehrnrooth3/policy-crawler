@@ -190,7 +190,8 @@ button:hover, .btn-primary:hover, .btn-secondary:hover, .btn-vote:hover { opacit
 .btn-vote { font-size: 1.1rem; padding: 0.3rem 0.6rem; background: var(--surface); border: 1px solid var(--border); }
 .btn-vote.up:hover { background: #d4edda; border-color: var(--success); }
 .btn-vote.down:hover { background: #f8d7da; border-color: var(--danger); }
-.btn-vote.save:hover { background: #fff3cd; border-color: var(--warning); }
+.btn-vote.save { background: #b06f00; color: #fff; border-color: #b06f00; }
+.btn-vote.save:hover { background: #8f5a00; border-color: #8f5a00; opacity: 1; }
 
 label { display: block; font-size: 0.875rem; margin-top: 0.75rem; margin-bottom: 0.25rem; color: var(--muted); }
 .checkbox-label { display: flex; align-items: center; gap: 0.5rem; color: var(--text); }

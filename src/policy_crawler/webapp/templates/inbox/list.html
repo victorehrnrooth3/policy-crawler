@@ -19,12 +19,11 @@
   <h1>{{ view | capitalize }} <span class="badge">{{ jobs | length }}</span></h1>
   <div class="header-actions">
     <form method="get" action="/{{ view }}" class="filter-row">
-      <select name="posting_type" onchange="this.form.submit()">
-        <option value="">All types</option>
-        <option value="role" {% if posting_type == "role" %}selected{% endif %}>Role</option>
-        <option value="fellowship" {% if posting_type == "fellowship" %}selected{% endif %}>Fellowship</option>
-        <option value="predoc" {% if posting_type == "predoc" %}selected{% endif %}>Predoc</option>
-        <option value="program_call" {% if posting_type == "program_call" %}selected{% endif %}>Program call</option>
+      <select name="feedback_state" onchange="this.form.submit()">
+        <option value="">All</option>
+        <option value="unrated" {% if feedback_state == "unrated" %}selected{% endif %}>Unrated</option>
+        <option value="up" {% if feedback_state == "up" %}selected{% endif %}>Upvoted</option>
+        <option value="down" {% if feedback_state == "down" %}selected{% endif %}>Downvoted</option>
       </select>
     </form>
     {% if view == "archived" and jobs %}
@@ -72,6 +71,7 @@
       {% if job.location_raw %}<span>{{ job.location_raw }}</span>{% endif %}
       <span class="tag">{{ job.posting_type }}</span>
       <span class="muted">{{ job.source_name }}</span>
+      {% if job.first_seen_at %}<span class="muted" title="First scanned">📅 {{ job.first_seen_at.strftime('%d %b %Y') }}</span>{% endif %}
     </div>
     {% if job.pass2_reason_to_consider %}
     <p class="reason">{{ job.pass2_reason_to_consider }}</p>

@@ -78,6 +78,36 @@ def test_inbox_score_shown(client: TestClient, auth_cookies: dict[str, str]) -> 
     assert "87" in resp.text
 
 
+def test_inbox_shows_scanned_date(client: TestClient, auth_cookies: dict[str, str]) -> None:
+    jobs = [_mock_job(first_seen_at=datetime(2026, 6, 14, tzinfo=UTC))]
+    conn = _make_mock_conn(rows=jobs)
+
+    with patch("policy_crawler.webapp.routes.inbox.connection", return_value=conn):
+        resp = client.get("/inbox", cookies=auth_cookies)
+
+    assert resp.status_code == 200
+    assert "14 Jun 2026" in resp.text
+
+
+def test_inbox_feedback_state_filter_queries_votes(
+    client: TestClient, auth_cookies: dict[str, str]
+) -> None:
+    job = _mock_job()
+    conn = _make_mock_conn(rows=[job])
+    # latest-vote lookup returns this job as upvoted
+    conn.cursor.return_value.fetchall.side_effect = [
+        [job],  # job list
+        [{"job_id": job["id"], "vote": "up"}],  # latest votes
+    ]
+
+    with patch("policy_crawler.webapp.routes.inbox.connection", return_value=conn):
+        resp = client.get("/inbox?feedback_state=up", cookies=auth_cookies)
+
+    assert resp.status_code == 200
+    sql = _executed_sql(conn)
+    assert "DISTINCT ON (job_id)" in sql
+
+
 _CSRF = "test-csrf-token-abc123"
 
 

@@ -78,6 +78,13 @@ FROM jobs
 
 _SCORE_ORDER = pgsql.SQL("COALESCE(j.pass2_score, j.pass1_score) DESC NULLS LAST")
 
+# Vote-state filter options (the list dropdown). Filtered in-memory after fetch.
+_FEEDBACK_STATES = {"unrated", "up", "down"}
+_LATEST_VOTES_SQL = (
+    "SELECT DISTINCT ON (job_id) job_id, vote FROM feedback "
+    "WHERE job_id = ANY(%s::uuid[]) ORDER BY job_id, created_at DESC"
+)
+
 
 def _view_query(view: str, threshold: int) -> tuple[pgsql.Composed, pgsql.SQL, int]:
     """Return (where, order, limit) for *view*. All views exclude deleted jobs."""
@@ -109,13 +116,9 @@ def _view_query(view: str, threshold: int) -> tuple[pgsql.Composed, pgsql.SQL, i
     return pgsql.Composed([where]), _SCORE_ORDER, 300
 
 
-def _render_list(request: Request, view: str, posting_type: str) -> HTMLResponse:
+def _render_list(request: Request, view: str, feedback_state: str) -> HTMLResponse:
     threshold = get_settings().recommended_score_threshold
     where, order, limit = _view_query(view, threshold)
-    if posting_type:
-        where = pgsql.Composed(
-            [where, pgsql.SQL(" AND j.posting_type = {}").format(pgsql.Literal(posting_type))]
-        )
     sql = _SELECT_COLS.format(where=where, order=order, limit=pgsql.Literal(limit))
 
     with connection() as conn, conn.cursor() as cur:
@@ -123,6 +126,14 @@ def _render_list(request: Request, view: str, posting_type: str) -> HTMLResponse
         jobs = cur.fetchall()
         cur.execute(_COUNTS_SQL, (threshold,))
         counts = cur.fetchone()
+
+        if feedback_state in _FEEDBACK_STATES and jobs:
+            cur.execute(_LATEST_VOTES_SQL, ([j["id"] for j in jobs],))
+            votes_by_job = {str(r["job_id"]): r["vote"] for r in cur.fetchall()}
+            if feedback_state == "unrated":
+                jobs = [j for j in jobs if str(j["id"]) not in votes_by_job]
+            else:
+                jobs = [j for j in jobs if votes_by_job.get(str(j["id"])) == feedback_state]
 
     csrf = get_csrf_token(request)
     resp = templates.TemplateResponse(
@@ -132,7 +143,7 @@ def _render_list(request: Request, view: str, posting_type: str) -> HTMLResponse
             "jobs": jobs,
             "view": view,
             "counts": counts,
-            "posting_type": posting_type,
+            "feedback_state": feedback_state,
             "csrf_token": csrf,
         },
     )
@@ -142,37 +153,37 @@ def _render_list(request: Request, view: str, posting_type: str) -> HTMLResponse
 
 @router.get("/inbox", response_class=HTMLResponse)
 async def inbox_list(
-    request: Request, posting_type: str = "", _user: str = Depends(require_session)
+    request: Request, feedback_state: str = "", _user: str = Depends(require_session)
 ) -> HTMLResponse:
-    return _render_list(request, "inbox", posting_type)
+    return _render_list(request, "inbox", feedback_state)
 
 
 @router.get("/recommended", response_class=HTMLResponse)
 async def recommended_list(
-    request: Request, posting_type: str = "", _user: str = Depends(require_session)
+    request: Request, feedback_state: str = "", _user: str = Depends(require_session)
 ) -> HTMLResponse:
-    return _render_list(request, "recommended", posting_type)
+    return _render_list(request, "recommended", feedback_state)
 
 
 @router.get("/saved", response_class=HTMLResponse)
 async def saved_list(
-    request: Request, posting_type: str = "", _user: str = Depends(require_session)
+    request: Request, feedback_state: str = "", _user: str = Depends(require_session)
 ) -> HTMLResponse:
-    return _render_list(request, "saved", posting_type)
+    return _render_list(request, "saved", feedback_state)
 
 
 @router.get("/all", response_class=HTMLResponse)
 async def all_list(
-    request: Request, posting_type: str = "", _user: str = Depends(require_session)
+    request: Request, feedback_state: str = "", _user: str = Depends(require_session)
 ) -> HTMLResponse:
-    return _render_list(request, "all", posting_type)
+    return _render_list(request, "all", feedback_state)
 
 
 @router.get("/archived", response_class=HTMLResponse)
 async def archived_list(
-    request: Request, posting_type: str = "", _user: str = Depends(require_session)
+    request: Request, feedback_state: str = "", _user: str = Depends(require_session)
 ) -> HTMLResponse:
-    return _render_list(request, "archived", posting_type)
+    return _render_list(request, "archived", feedback_state)
 
 
 def _csrf_error(request: Request) -> HTMLResponse:
