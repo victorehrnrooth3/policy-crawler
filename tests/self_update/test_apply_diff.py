@@ -43,7 +43,9 @@ soft_negatives: []
 
 
 def _op(op: str, path: str, value=None, reason: str = "test") -> PatchOp:
-    return PatchOp(op=op, path=path, value=value, reason=reason)
+    from typing import Literal, cast
+
+    return PatchOp(op=cast(Literal["add", "remove", "update"], op), path=path, value=value, reason=reason)
 
 
 def test_update_scalar() -> None:
