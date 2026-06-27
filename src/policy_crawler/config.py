@@ -44,6 +44,15 @@ class Settings(BaseSettings):
         default="victorehrnrooth3/policy-crawler", alias="GITHUB_REPOSITORY"
     )
     ranker_degrade_to_haiku_only: bool = Field(default=False, alias="RANKER_DEGRADE_TO_HAIKU_ONLY")
+    # Cost guardrails (step 11). Soft caps degrade gracefully (Pass 2 → Haiku) and
+    # alert; only the per-run hard kill actually aborts a run. See obs/cost.py.
+    daily_soft_cap_usd: float = Field(default=0.30, alias="DAILY_SOFT_CAP_USD")
+    monthly_soft_cap_usd: float = Field(default=5.0, alias="MONTHLY_SOFT_CAP_USD")
+    hard_kill_usd: float = Field(default=2.0, alias="HARD_KILL_USD")
+    # Digest / "Recommended" tab: include every job scoring at or above this, with a
+    # floor of digest_min_jobs when fewer clear the bar. One threshold drives both.
+    recommended_score_threshold: int = Field(default=70, alias="RECOMMENDED_SCORE_THRESHOLD")
+    digest_min_jobs: int = Field(default=8, alias="DIGEST_MIN_JOBS")
 
 
 @lru_cache(maxsize=1)

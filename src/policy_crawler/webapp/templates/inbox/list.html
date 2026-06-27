@@ -1,65 +1,97 @@
 {% extends "base.html" %}
-{% block title %}Inbox{% endblock %}
+{% block title %}{{ view | capitalize }}{% endblock %}
+
+{% macro action_btn(job_id, op, label, cls, confirm=false) %}
+<form method="post" action="/inbox/action" class="inline-form{% if confirm %} js-confirm{% endif %}">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+  <input type="hidden" name="op" value="{{ op }}">
+  <input type="hidden" name="view" value="{{ view }}">
+  <input type="hidden" name="job_ids" value="{{ job_id }}">
+  <button type="submit" class="{{ cls }}" title="{{ label }}">{{ label }}</button>
+</form>
+{% endmacro %}
+
 {% block content %}
+<input type="hidden" id="csrf-token" value="{{ csrf_token }}">
+<input type="hidden" id="current-view" value="{{ view }}">
+
 <div class="page-header">
-  <h1>Inbox <span class="badge">{{ jobs | length }}</span></h1>
-  <form method="get" action="/inbox" class="filter-row">
-    <select name="posting_type">
-      <option value="">All types</option>
-      <option value="role" {% if posting_type == "role" %}selected{% endif %}>Role</option>
-      <option value="fellowship" {% if posting_type == "fellowship" %}selected{% endif %}>Fellowship</option>
-      <option value="predoc" {% if posting_type == "predoc" %}selected{% endif %}>Predoc</option>
-      <option value="program_call" {% if posting_type == "program_call" %}selected{% endif %}>Program call</option>
-    </select>
-    <select name="min_score">
-      <option value="0" {% if min_score == 0 %}selected{% endif %}>Any score</option>
-      <option value="60" {% if min_score == 60 %}selected{% endif %}>&#8805;60</option>
-      <option value="75" {% if min_score == 75 %}selected{% endif %}>&#8805;75</option>
-    </select>
-    <select name="feedback_state">
-      <option value="">All</option>
-      <option value="unrated" {% if feedback_state == "unrated" %}selected{% endif %}>Unrated</option>
-      <option value="up" {% if feedback_state == "up" %}selected{% endif %}>Upvoted</option>
-      <option value="down" {% if feedback_state == "down" %}selected{% endif %}>Downvoted</option>
-      <option value="save" {% if feedback_state == "save" %}selected{% endif %}>Saved</option>
-    </select>
-    <button type="submit">Filter</button>
-  </form>
+  <h1>{{ view | capitalize }} <span class="badge">{{ jobs | length }}</span></h1>
+  <div class="header-actions">
+    <form method="get" action="/{{ view }}" class="filter-row">
+      <select name="posting_type" onchange="this.form.submit()">
+        <option value="">All types</option>
+        <option value="role" {% if posting_type == "role" %}selected{% endif %}>Role</option>
+        <option value="fellowship" {% if posting_type == "fellowship" %}selected{% endif %}>Fellowship</option>
+        <option value="predoc" {% if posting_type == "predoc" %}selected{% endif %}>Predoc</option>
+        <option value="program_call" {% if posting_type == "program_call" %}selected{% endif %}>Program call</option>
+      </select>
+    </form>
+    {% if view == "archived" and jobs %}
+    <form method="post" action="/inbox/archived/delete-all" class="inline-form js-confirm-all">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <button type="submit" class="btn-danger">Delete all</button>
+    </form>
+    {% endif %}
+  </div>
 </div>
 
+{% if jobs %}
+<div class="bulk-bar">
+  <label class="select-all-label">
+    <input type="checkbox" id="select-all"> Select all
+  </label>
+  <div class="bulk-actions" id="bulk-actions" hidden>
+    <span id="bulk-count">0 selected</span>
+    {% if view == "archived" %}
+    <button type="button" class="bulk-op" data-op="unarchive">Unarchive</button>
+    <button type="button" class="bulk-op btn-danger" data-op="delete">Delete</button>
+    {% else %}
+    <button type="button" class="bulk-op" data-op="save">Save</button>
+    <button type="button" class="bulk-op" data-op="archive">Archive</button>
+    <button type="button" class="bulk-op btn-danger" data-op="delete">Delete</button>
+    {% endif %}
+  </div>
+</div>
+{% endif %}
+
 {% if not jobs %}
-<p class="muted">No jobs match the current filters in the last 14 days.</p>
+<p class="muted">No jobs in this view.</p>
 {% endif %}
 
 {% for job in jobs %}
 <div class="card job-card">
-  <div class="job-header">
-    <a href="/inbox/{{ job.id }}" class="job-title">{{ job.title }}</a>
-    <span class="score">{{ job.pass2_score or job.pass1_score or '—' }}/100</span>
-  </div>
-  <div class="job-meta">
-    <span>{{ job.company }}</span>
-    {% if job.location_raw %}<span>{{ job.location_raw }}</span>{% endif %}
-    <span class="tag">{{ job.posting_type }}</span>
-    <span class="muted">{{ job.source_name }}</span>
-  </div>
-  {% if job.pass2_reason_to_consider %}
-  <p class="reason">{{ job.pass2_reason_to_consider }}</p>
-  {% endif %}
-  <div class="vote-row">
-    <form method="post" action="/v/webapp/{{ job.id }}/up">
-      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-      <button type="submit" class="btn-vote up" title="Up">&#128077;</button>
-    </form>
-    <form method="post" action="/v/webapp/{{ job.id }}/down">
-      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-      <button type="submit" class="btn-vote down" title="Down">&#128078;</button>
-    </form>
-    <form method="post" action="/v/webapp/{{ job.id }}/save">
-      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-      <button type="submit" class="btn-vote save" title="Save">&#128278;</button>
-    </form>
-    <a href="{{ job.url }}" target="_blank" rel="noopener" class="btn-secondary">View posting &rarr;</a>
+  <input type="checkbox" class="job-check" value="{{ job.id }}" aria-label="Select job">
+  <div class="job-body">
+    <div class="job-header">
+      <a href="/inbox/{{ job.id }}" class="job-title">{{ job.title }}</a>
+      <span class="score">{{ job.pass2_score or job.pass1_score or '—' }}/100</span>
+    </div>
+    <div class="job-meta">
+      <span>{{ job.company }}</span>
+      {% if job.location_raw %}<span>{{ job.location_raw }}</span>{% endif %}
+      <span class="tag">{{ job.posting_type }}</span>
+      <span class="muted">{{ job.source_name }}</span>
+    </div>
+    {% if job.pass2_reason_to_consider %}
+    <p class="reason">{{ job.pass2_reason_to_consider }}</p>
+    {% endif %}
+    <div class="vote-row">
+      {{ action_btn(job.id, "up", "👍", "btn-vote up") }}
+      {{ action_btn(job.id, "down", "👎", "btn-vote down") }}
+      {% if view == "archived" %}
+        {{ action_btn(job.id, "unarchive", "Unarchive", "btn-secondary") }}
+      {% else %}
+        {% if job.saved_at %}
+          {{ action_btn(job.id, "unsave", "Unsave", "btn-secondary") }}
+        {% else %}
+          {{ action_btn(job.id, "save", "🔖 Save", "btn-vote save") }}
+        {% endif %}
+        {{ action_btn(job.id, "archive", "Archive", "btn-secondary") }}
+      {% endif %}
+      {{ action_btn(job.id, "delete", "🗑 Delete", "btn-danger", confirm=true) }}
+      <a href="{{ job.url }}" target="_blank" rel="noopener" class="btn-secondary">View posting &rarr;</a>
+    </div>
   </div>
 </div>
 {% endfor %}

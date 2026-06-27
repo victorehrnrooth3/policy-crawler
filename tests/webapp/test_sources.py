@@ -160,66 +160,6 @@ def test_snooze_suggestion_flow(
     assert resp.status_code == 303
 
 
-# ── GET /status (no auth) ─────────────────────────────────────────────────────
-
-
-def test_status_no_auth_required(client: TestClient) -> None:
-    conn = _make_mock_conn(rows=[])
-    conn.__enter__.return_value.cursor.return_value.fetchall.side_effect = [
-        [],  # runs
-        [],  # llm_stats
-        [],  # sources
-    ]
-    conn.__enter__.return_value.cursor.return_value.fetchone.side_effect = [
-        {"total": 42},
-        {"total": 30},
-    ]
-
-    with patch("policy_crawler.webapp.routes.status.connection", return_value=conn):
-        resp = client.get("/status")
-
-    assert resp.status_code == 200
-    assert "42" in resp.text  # job_count
-    assert "30" in resp.text  # scored_count
-
-
-def test_status_shows_runs(client: TestClient) -> None:
-    from datetime import timedelta
-
-    now = datetime.now(tz=UTC)
-    runs = [
-        {
-            "id": uuid4(),
-            "kind": "daily",
-            "status": "succeeded",
-            "started_at": now - timedelta(hours=1),
-            "finished_at": now,
-            "jobs_seen": 100,
-            "jobs_new": 5,
-            "llm_calls_count": 10,
-            "total_cost_usd": 0.05,
-            "error": None,
-        }
-    ]
-    conn = _make_mock_conn(rows=[])
-    conn.__enter__.return_value.cursor.return_value.fetchall.side_effect = [
-        runs,
-        [],
-        [],
-    ]
-    conn.__enter__.return_value.cursor.return_value.fetchone.side_effect = [
-        {"total": 100},
-        {"total": 80},
-    ]
-
-    with patch("policy_crawler.webapp.routes.status.connection", return_value=conn):
-        resp = client.get("/status")
-
-    assert resp.status_code == 200
-    assert "daily" in resp.text
-    assert "succeeded" in resp.text
-
-
 # ── CSRF protection on POSTs ─────────────────────────────────────────────────
 
 

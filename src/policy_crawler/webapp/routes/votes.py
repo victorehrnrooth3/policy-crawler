@@ -233,6 +233,11 @@ async def webapp_vote(
             "INSERT INTO feedback (job_id, vote, source) VALUES (%s, %s::vote_kind, 'webapp')",
             (job_id, action),
         )
+        # Keep the saved_at view-state in sync with a 'save' vote from the detail page.
+        if action == "save":
+            cur.execute(
+                "UPDATE jobs SET saved_at = now() WHERE id = %s AND saved_at IS NULL", (job_id,)
+            )
         conn.commit()
 
     return RedirectResponse(url=f"/inbox/{job_id}", status_code=303)  # type: ignore[return-value]

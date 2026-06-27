@@ -101,6 +101,7 @@ class RunSummary:
     jobs_seen: int = 0
     jobs_new: int = 0
     jobs_updated: int = 0
+    sources_silent: int = 0  # enabled sources that returned 0 jobs but used to succeed
     errors: list[str] = field(default_factory=list)
 
     @property
@@ -292,6 +293,7 @@ def crawl_all(
             # Warn if source went silent
             prev_seen = source.get("last_success_at")
             if len(raw_jobs) == 0 and prev_seen is not None:
+                summary.sources_silent += 1
                 log.warning("crawl.source_silent", last_success=str(prev_seen))
 
             cur.execute(_UPDATE_SOURCE_TIMES, (source_ok and len(raw_jobs) > 0, source["id"]))

@@ -1,5 +1,13 @@
 # Step 11 — Observability & Cost Guardrails
 
+## Status
+
+**Done.** Cost prices live in one place (`obs/cost.py`); daily/monthly/per-run
+spend sums read straight from `llm_calls`; Pass 2 degrades to Haiku at the daily
+soft cap; a per-run hard kill skips Pass 2; failure + warning emails are deduped
+per run per day; `/status` (and a new `/status.json`) surface runs, spend-vs-caps,
+source health, and pending queues. See "As-built departures" at the bottom.
+
 ## Goal
 
 Make the system legible: per-run cost reports, a daily soft cap that degrades to Haiku-only, failure email alerts, and a `/status` page that surfaces health at a glance.
@@ -93,6 +101,41 @@ DAILY_SOFT_CAP_USD=0.0001 python -m policy_crawler.ranker.run --kind daily --lim
 
 ## Followups
 
-- Push run summaries to a private Slack/Telegram if I ever add one.
+- Push run summaries to a private Slack/Telegram if I ever add one (`/status.json` is the seam).
 - Add an automatic "open a GitHub issue" path for new failure modes (reuse the GH PAT from Step 10).
 - A weekly "system health" email with a 7-day cost graph (text-based sparklines are fine).
+- Side-by-side per-run cost breakdown by kind on `/status` (the data is in `llm_calls.kind`).
+
+## As-built departures
+
+The code is authoritative; this section explains the delta from the spec above.
+
+**`runs.total_cost_usd` is re-derived from `llm_calls`, not threaded.** The run
+wrapper sums `run_spend(run_id)` (and `run_call_count`) at finish time, so the
+figure folds crawl_extract + pass1/2 + discovery + self_update without each
+pipeline threading its own cost. Falls back to the threaded summary totals if the
+aggregate query fails — cost accounting must never block a run from finishing.
+
+**The soft-cap decision is made in `score_pending`, not literally inside
+`deep_score`.** `score_pending` calls `should_degrade_to_haiku(today)` once before
+the Pass-2 batch and passes a `degrade` flag into `deep_score` (which keeps
+`deep_score` unit-testable without a DB and runs the whole batch on one model).
+Degraded Pass-2 rows are tagged `llm_calls.metadata.degraded = true`.
+
+**Migration 0005 adds `metadata jsonb` to both `runs` and `llm_calls`** — the spec
+referenced `runs.metadata.alert_sent_at` and `llm_calls.metadata.degraded` but the
+columns didn't exist yet.
+
+**Alert wiring lives in `obs/alerts.py`** (`send_failure_email(run_id, kind, error)`
++ `send_warning_email(run_id, body)`), replacing the inline `_send_failure_alert`
+in `run.py`. Both dedupe per run per day via `runs.metadata.alert_sent_at` and
+never raise. The warning email fires from the wrapper when ≥ 5 sources that
+previously returned jobs come back empty in one run.
+
+**`/status.json` added** (unauthenticated, like `/status`) exposing last-run,
+spend-vs-caps, pending counts, and overdue-source count for future integrations.
+
+**Pricing keys match by model-id prefix**, so the dated ids actually used in code
+(`claude-haiku-4-5-20251001`) resolve to the base `claude-haiku-4-5` price entry.
+`ranker/pass2.py:_cost` now delegates to `obs.cost.compute_call_cost` so the price
+table has a single home.

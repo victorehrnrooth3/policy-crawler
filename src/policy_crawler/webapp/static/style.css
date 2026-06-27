@@ -160,6 +160,7 @@ a { color: var(--accent); }
 
 .muted { color: var(--muted); }
 .error { color: var(--danger); }
+.warn { color: #b8860b; }
 .success { color: var(--success); }
 .mt { margin-top: 1rem; }
 
@@ -285,3 +286,54 @@ form button[type="submit"] { margin-top: 0.75rem; }
 pre { overflow-x: auto; background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 0.75rem; }
 
 details summary { cursor: pointer; color: var(--muted); font-size: 0.875rem; }
+
+/* ── Nav active state + count badges ─────────────────────────────────── */
+nav a.active { background: var(--border); font-weight: 600; }
+.nav-badge {
+  background: var(--accent);
+  color: white;
+  border-radius: 999px;
+  padding: 0 6px;
+  font-size: 0.7rem;
+  margin-left: 2px;
+}
+
+/* ── Header actions row (filter + delete-all) ────────────────────────── */
+.header-actions { display: flex; gap: 0.75rem; align-items: center; margin-left: auto; }
+.header-actions .filter-row,
+.header-actions .inline-form { margin: 0; }
+
+/* ── Danger button ───────────────────────────────────────────────────── */
+.btn-danger { background: var(--danger); color: white; }
+.btn-danger:hover { opacity: 0.85; }
+
+/* ── Inline action forms in the vote row (no stacked margins) ────────── */
+.inline-form { display: inline; margin: 0; }
+.vote-row .inline-form button,
+.header-actions .inline-form button { margin-top: 0; }
+
+/* ── Bulk selection bar + per-card checkbox ──────────────────────────── */
+.bulk-bar {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.4rem 0;
+  margin-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border);
+}
+.select-all-label {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0;
+  color: var(--text);
+  font-size: 0.85rem;
+}
+.bulk-actions { display: flex; align-items: center; gap: 0.5rem; }
+.bulk-actions #bulk-count { color: var(--muted); font-size: 0.8rem; }
+.select-all-label input,
+.job-check { width: auto; }
+
+.job-card { display: flex; gap: 0.75rem; align-items: flex-start; }
+.job-card .job-check { margin-top: 0.35rem; flex-shrink: 0; }
+.job-body { flex: 1; min-width: 0; }

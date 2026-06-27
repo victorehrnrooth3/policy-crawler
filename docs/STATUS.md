@@ -2,7 +2,7 @@
 
 Single source of truth for "where are we right now?". Update this file at the end of every meaningful session.
 
-## Snapshot (last updated: 2026-06-13 — steps 09 + 10 built on step-09-source-config)
+## Snapshot (last updated: 2026-06-27 — step 11 + webapp/email overhaul on step-09-source-config; steps 09+10 merged to main via PR #2)
 
 | Step | State | Branch | Notes |
 |---|---|---|---|
@@ -14,11 +14,12 @@ Single source of truth for "where are we right now?". Update this file at the en
 | 06 — Email digest | **Done, merged to main** | — | tokens, compose, template, send via Resend. |
 | 07 — Vote endpoint & webapp | **Done, merged to main** | — | FastAPI on Vercel. All routes smoke-tested. |
 | 08 — Orchestration | **Done, merged to main** | — | CI workflow; `run.py` orchestrator. Connection-resilience fixes (keepalives + write retry). |
-| 09 — Source config + discovery | **Done, PR open** | `step-09-source-config` | See detail below. |
-| 10 — Preference self-update | **Done, PR open** | `step-09-source-config` | `self_update` package; weekly proposes a profile diff, `/profile` approve opens a PR via the GitHub API. See detail below. |
-| 11 — Observability & guardrails | **Not started** | — | Foundation tables exist; no cost-cap logic or `/status` page yet. |
+| 09 — Source config + discovery | **Done, merged to main** | — | Merged via PR #2. See detail below. |
+| 10 — Preference self-update | **Done, merged to main** | — | Merged via PR #2. `self_update` package; weekly proposes a profile diff, `/profile` approve opens a PR via the GitHub API. See detail below. |
+| 11 — Observability & guardrails | **Done** | `step-09-source-config` | `obs/cost.py` + `obs/alerts.py`; Pass-2 soft-cap degrade to Haiku; per-run hard kill; deduped failure/warning emails; `/status` + `/status.json`. See detail below. |
+| Webapp + email overhaul (post-11) | **Done** | `step-09-source-config` | Threshold-based digest (≥70, floor 8); 5 inbox views (inbox/recommended/saved/all/archived); per-card + bulk save/archive/delete with confirm. See detail below. |
 
-**244 tests passing**, 8 skipped (live-DB), 4 errored locally from a pre-existing `vcr`/`aiohttp` version mismatch (`aiohttp.streams.AsyncStreamReaderMixin`) that does not occur on a fresh CI install. `ruff` + `pyright` clean.
+**274 tests passing**, 8 skipped (live-DB), 4 errored locally from a pre-existing `vcr`/`aiohttp` version mismatch (`aiohttp.streams.AsyncStreamReaderMixin`) that does not occur on a fresh CI install. `ruff` + `pyright` clean. (One token test is order-flaky under `pytest-randomly`; passes deterministically with `-p no:randomly`.)
 
 ## What landed in step-09-source-config
 
@@ -76,9 +77,27 @@ Webapp `/profile`: approve now calls `apply_proposed` (opens the PR, marks the r
 
 Migration 0004's `self_update` `llm_call_kind` was already present from `0001_init.sql`; no new migration needed for Step 10. New optional config `GITHUB_REPOSITORY` (default `victorehrnrooth3/policy-crawler`) names the PR target; set it as a Vercel env var so the approve route can open PRs.
 
+### Phase 4 — Observability & guardrails (Step 11)
+
+New `src/policy_crawler/obs/cost.py` + `obs/alerts.py`:
+
+- `cost.py` — single price table (`PRICES_USD_PER_M_TOKENS`, keyed by model-id prefix); `daily_spend` / `monthly_spend` / `run_spend` / `run_call_count` sum `llm_calls.cost_usd` straight from the DB; `should_degrade_to_haiku(today)` returns true once today's spend hits `DAILY_SOFT_CAP_USD`.
+- `alerts.py` — `send_failure_email` / `send_warning_email`, both deduped per run per day via `runs.metadata.alert_sent_at`, both best-effort (never raise).
+- **Pass-2 degrade**: `score_pending` checks the soft cap once before the batch and runs Pass 2 on Haiku if hit (rows tagged `llm_calls.metadata.degraded`). **Hard kill**: `HARD_KILL_USD` (default $2) skips Pass 2 if a single run crosses it.
+- **`runs.total_cost_usd` re-derived**: the `run.py` wrapper sums all `llm_calls` for the run at finish (`run_spend`), folding in crawl_extract that the crawl summary never threaded. The wrapper also emails a (deduped) warning when ≥ 5 previously-productive sources go silent in one run.
+- **`/status`** extended (14 runs, spend-vs-caps, source-health gap table, pending queues) + new unauthenticated **`/status.json`**.
+
+New settings: `DAILY_SOFT_CAP_USD` (0.30), `MONTHLY_SOFT_CAP_USD` (5.0), `HARD_KILL_USD` (2.0).
+
 ### Migrations and DB state
 
-Migration 0004 adds `camoufox`, `crawl_extract`, `weekly` enum values — **already applied to production Neon**. Step 10 added no migration (`self_update` `llm_call_kind` and `proposed_profile_changes` / `change_status` already shipped in `0001_init.sql`). New dependency: `ruamel.yaml~=0.18`.
+Migration 0004 adds `camoufox`, `crawl_extract`, `weekly` enum values — **already applied to production Neon**. Step 10 added no migration (`self_update` `llm_call_kind` and `proposed_profile_changes` / `change_status` already shipped in `0001_init.sql`). **Migrations 0005 (Step 11 — `metadata jsonb` on `runs`/`llm_calls`) and 0006 (webapp job states — `saved_at`/`archived_at`/`deleted_at` on `jobs`) are NOT yet applied to production Neon; run `python migrations/_apply.py` before the next run.** New dependency: `ruamel.yaml~=0.18`.
+
+### Webapp + email enhancements (post-Step-11)
+
+- **Digest is no longer capped at 8.** `digest/compose.py:pick_jobs` now sends every job scoring ≥ `RECOMMENDED_SCORE_THRESHOLD` (default 70), with a floor of `DIGEST_MIN_JOBS` (default 8) when fewer clear the bar. Deleted jobs are excluded. The 2 borderline outliers are unchanged.
+- **Inbox is now five top-level nav views**: `Inbox` (unchanged — recent digested, last 14 days), `Recommended` (score ≥ threshold), `Saved`, `All` (every scored job), `Archived` (with **Delete all**). Nav order: Inbox · Recommended · Saved · All · Sources · Archived · Profile · Status · Manual.
+- **Job actions**: per-card and checkbox **bulk** save / archive / delete (+ up/down); `deleted_at`/`archived_at`/`saved_at` are view-state columns. **Delete is view-only — it records no feedback signal** (decluttering, not a preference judgment), so the row stays for the agent. Save/up/down still log `feedback`. Native `confirm()` gates every delete (single, bulk, delete-all) via `static/app.js`.
 
 Sources seeded: 78 enabled total.
 
@@ -120,9 +139,10 @@ Sources seeded: 78 enabled total.
 
 ## Next concrete actions
 
-1. **Merge `step-09-source-config` → `main`** (CI must pass on the PR — it now also covers steps 09 and 10).
-2. **Trigger a manual `workflow_dispatch` of `weekly.yml`** after merge to confirm the full pipeline (crawl → rank → digest → discovery → self-update) end-to-end.
-3. **Start Step 11** — observability & guardrails: fold `crawl_extract` + `self_update` + `discovery` costs into `runs.total_cost_usd`, build the `/status` page, and wire the `RANKER_DEGRADE_TO_HAIKU_ONLY` cost-cap to real spend.
+1. **Apply migrations 0005 + 0006** to production Neon (`python migrations/_apply.py`) — `metadata jsonb` on `runs`/`llm_calls` (Step 11) and `saved_at`/`archived_at`/`deleted_at` on `jobs` (webapp views). The webapp's new inbox views 500 until 0006 lands; `/status`, alert dedup, and degraded-row tagging need 0005.
+2. **Open a PR `step-09-source-config` → `main`** (CI must pass) covering Step 11 + the webapp/email overhaul; merging triggers the Vercel redeploy of the new inbox.
+3. **Trigger a manual `workflow_dispatch` of `weekly.yml`** to confirm the full pipeline end-to-end and that `runs.total_cost_usd` now reflects crawl_extract cost; eyeball `/status` and the new `/recommended` · `/all` · `/archived` views.
+4. **Roadmap steps are complete.** Remaining work is followups (Slack/Telegram via `/status.json`, GH-issue-on-failure, weekly health email; styled delete modal instead of native `confirm()`) and the open Step 09/10 pending checks below.
 
 ## Conventions reminder
 
